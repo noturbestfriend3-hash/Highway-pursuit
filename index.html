@@ -1128,6 +1128,65 @@ document.getElementById('retryBtn').onclick = () => {
 };
 
 // ============================================================
+// FULLSCREEN
+// ============================================================
+function isFullscreen() {
+  return !!(document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement);
+}
+
+function enterFullscreen() {
+  const el = document.documentElement;
+  if (el.requestFullscreen) return el.requestFullscreen();
+  if (el.webkitRequestFullscreen) return el.webkitRequestFullscreen();
+  if (el.msRequestFullscreen) return el.msRequestFullscreen();
+  return Promise.reject();
+}
+
+function exitFullscreen() {
+  if (document.exitFullscreen) return document.exitFullscreen();
+  if (document.webkitExitFullscreen) return document.webkitExitFullscreen();
+  if (document.msExitFullscreen) return document.msExitFullscreen();
+  return Promise.reject();
+}
+
+function toggleFullscreen() {
+  if (isFullscreen()) {
+    exitFullscreen().catch(() => {});
+  } else {
+    enterFullscreen().catch(() => {});
+  }
+}
+
+function updateFsButtons() {
+  const on = isFullscreen();
+  const fsBtn = document.getElementById('fsBtn');
+  const fsFloat = document.getElementById('fsFloat');
+  if (fsBtn) fsBtn.textContent = on ? '⛶ Exit Fullscreen' : '⛶ Fullscreen';
+  if (fsFloat) {
+    fsFloat.textContent = on ? '⛶' : '⛶';
+    // show floating button once game has started (not on orient screen)
+    const orient = document.getElementById('orient');
+    if (orient && !orient.classList.contains('active')) {
+      fsFloat.classList.add('show');
+    }
+  }
+}
+
+document.getElementById('fsBtn').addEventListener('click', (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  toggleFullscreen();
+});
+document.getElementById('fsFloat').addEventListener('click', (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  toggleFullscreen();
+});
+
+document.addEventListener('fullscreenchange', updateFsButtons);
+document.addEventListener('webkitfullscreenchange', updateFsButtons);
+
+// ============================================================
 // BOOT
 // ============================================================
 document.getElementById('startBtn').onclick = () => {
@@ -1135,6 +1194,8 @@ document.getElementById('startBtn').onclick = () => {
   if (screen.orientation && screen.orientation.lock) {
     screen.orientation.lock('landscape').catch(() => {});
   }
+  // show floating fullscreen button after leaving start screen
+  document.getElementById('fsFloat').classList.add('show');
   loadImages(() => {
     playVideo('clip1.mp4', () => {
       startVN(VN1, () => {
