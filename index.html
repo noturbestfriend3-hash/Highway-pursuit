@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Highway Pursuit</title>
+<style>
+  :root {
+    --bg: #0a0a12;
+    --accent: #e63946;
+    --text: #f1f1f1;
+    --panel: rgba(10,10,20,0.85);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; user-select: none; }
+  html, body {
+    width: 100%; height: 100%;
+    overflow: hidden;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Segoe UI", system-ui, sans-serif;
+    touch-action: none;
+  }
+  .screen {
+    position: absolute; inset: 0;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .screen.active { display: flex; }
+
+  /* ===== ORIENTATION ===== */
+  #orient {
+    background: #000;
+    z-index: 1000;
+    text-align: center;
+    padding: 2rem;
+  }
+  #orient h1 { font-size: 1.6rem; margin-bottom: 1rem; color: #ff6b6b; }
+  #orient p { opacity: 0.8; margin-bottom: 2rem; }
+  #orient .phone-icon {
+    font-size: 4rem;
+    animation: rotateHint 2s ease-in-out infinite;
+  }
+  @keyframes rotateHint {
+    0%, 100% { transform: rotate(0deg); }
+    50% { transform: rotate(90deg); }
+  }
+  #startBtn {
+    margin-top: 1.5rem;
+    padding: 0.9rem 2.4rem;
+    font-size: 1.2rem;
+    background: var(--accent);
+    border: none;
+    border-radius: 12px;
+    color: white;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  /* ===== VIDEO ===== */
+  #videoScreen video {
+    width: 100%; height: 100%;
+    object-fit: contain;
+    background: #000;
+  }
+  #videoSkip {
+    position: absolute;
+    bottom: 1.2rem; right: 1.2rem;
+    padding: 0.5rem 1rem;
+    background: rgba(0,0,0,0.6);
+    border: 1px solid #fff3;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 0.9rem;
+  }
+
+  /* ===== VISUAL NOVEL ===== */
+  #vnScreen {
+    background: #000;
+  }
+  #vnBg {
+    position: absolute; inset: 0;
+    background-size: cover;
+    background-position: center;
+    transition: opacity 0.4s;
+  }
+  #vnChars {
+    position: absolute;
+    bottom: 22%;
+    left: 0; right: 0;
+    height: 55%;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    pointer-events: none;
+    padding: 0 4%;
+  }
+  #vnChars img {
+    max-height: 100%;
+    max-width: 42%;
+    object-fit: contain;
+    transition: opacity 0.3s, filter 0.3s;
+  }
+  #vnChars img.dim { filter: brightness(0.45); opacity: 0.7; }
+  #vnChars img.hidden { opacity: 0; }
+  #vnBox {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    background: linear-gradient(transparent, rgba(0,0,0,0.92) 20%);
+    padding: 1.2rem 1.5rem 1.8rem;
+    min-height: 28%;
+  }
+  #vnName {
+    display: inline-block;
+    background: var(--accent);
+    color: #fff;
+    padding: 0.25rem 1rem;
+    border-radius: 6px 6px 0 0;
+    font-weight: 700;
+    font-size: 0.95rem;
+    margin-bottom: -1px;
+  }
+  #vnText {
+    background: rgba(12,12,22,0.92);
+    border: 2px solid #e6394688;
+    border-radius: 0 10px 10px 10px;
+    padding: 0.9rem 1.1rem;
+    font-size: 1.05rem;
+    line-height: 1.45;
+    min-height: 4.5rem;
+    white-space: pre-wrap;
+  }
+  #vnClickHint {
+    position: absolute;
+    bottom: 0.5rem; right: 1.2rem;
+    font-size: 0.75rem;
+    opacity: 0.5;
+    animation: blink 1.2s infinite;
+  }
+  @keyframes blink { 50% { opacity: 0.15; } }
+
+  /* ===== GAME ===== */
+  #gameScreen { background: #111; }
+  #gameCanvas {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+  }
+  #hud {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    padding: 0.6rem 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    pointer-events: none;
+    z-index: 10;
+  }
+  .hud-box {
+    background: var(--panel);
+    border: 1px solid #ffffff22;
+    border-radius: 10px;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.9rem;
+  }
+  #healthBarOuter {
+    width: 140px; height: 14px;
+    background: #333;
+    border-radius: 7px;
+    overflow: hidden;
+    margin-top: 4px;
+  }
+  #healthBar {
+    height: 100%;
+    width: 100%;
+    background: linear-gradient(90deg, #e63946, #ff8e53);
+    transition: width 0.2s;
+  }
+  #controls {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 28%;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    padding: 0 1.2rem 1.2rem;
+    pointer-events: none;
+    z-index: 10;
+  }
+  .ctrl-side { display: flex; gap: 0.8rem; pointer-events: auto; }
+  .btn {
+    width: 64px; height: 64px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.12);
+    border: 2px solid rgba(255,255,255,0.35);
+    color: #fff;
+    font-size: 1.6rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+  }
+  .btn:active, .btn.active { background: rgba(230,57,70,0.55); border-color: #e63946; }
+  #fireBtn {
+    width: 78px; height: 78px;
+    background: rgba(230,57,70,0.25);
+    border-color: #e63946;
+    font-size: 1.1rem;
+    font-weight: 700;
+  }
+  #fireBtn:active, #fireBtn.active { background: rgba(230,57,70,0.7); }
+
+  /* Joystick area */
+  #joyZone {
+    width: 110px; height: 110px;
+    position: relative;
+    pointer-events: auto;
+  }
+  #joyBase {
+    width: 100%; height: 100%;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.08);
+    border: 2px solid rgba(255,255,255,0.25);
+    position: absolute;
+  }
+  #joyKnob {
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    background: rgba(230,57,70,0.8);
+    border: 2px solid #fff;
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%,-50%);
+    pointer-events: none;
+  }
+
+  #gameOver, #gameWin {
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,0.75);
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 20;
+    text-align: center;
+  }
+  #gameOver h2, #gameWin h2 { font-size: 2rem; margin-bottom: 1rem; }
+  #gameOver button, #gameWin button {
+    margin-top: 1.2rem;
+    padding: 0.8rem 2rem;
+    font-size: 1.1rem;
+    background: var(--accent);
+    border: none;
+    border-radius: 10px;
+    color: #fff;
+    font-weight: 700;
+  }
+
+  /* Code reveal */
+  #codeReveal {
+    font-size: 2.8rem;
+    letter-spacing: 0.4rem;
+    color: #ffd700;
+    text-shadow: 0 0 20px #ffd70088;
+    margin: 1rem 0;
+    font-weight: 800;
+  }
+</style>
+</head>
+<body>
+
+<!-- ORIENTATION / START -->
+<div id="orient" class="screen active">
+  <div class="phone-icon">📱</div>
+  <h1>Turn your phone to Landscape</h1>
+  <p>This experience is designed for landscape mode.</p>
+  <button id="startBtn">I'm ready — Start</button>
+</div>
+
+<!-- VIDEO -->
+<div id="videoScreen" class="screen">
+  <video id="mainVideo" playsinline></video>
+  <button id="videoSkip">Skip ▶</button>
+</div>
+
+<!-- VISUAL NOVEL -->
+<div id="vnScreen" class="screen">
+  <div id="vnBg"></div>
+  <div id="vnChars">
+    <img id="vnLeft" src="" alt="" class="hidden">
+    <img id="vnRight" src="" alt="" class="hidden">
+  </div>
+  <div id="vnBox">
+    <div id="vnName">...</div>
+    <div id="vnText"></div>
+    <div id="vnClickHint">tap to continue</div>
+  </div>
+</div>
+
+<!-- GAME -->
+<div id="gameScreen" class="screen">
+  <canvas id="gameCanvas"></canvas>
+  <div id="hud">
+    <div class="hud-box">
+      <div>HP</div>
+      <div id="healthBarOuter"><div id="healthBar"></div></div>
+    </div>
+    <div class="hud-box" style="text-align:center">
+      <div style="font-size:0.75rem;opacity:0.7">KILLS</div>
+      <div id="killCount" style="font-size:1.4rem;font-weight:700">0 / 40</div>
+    </div>
+    <div class="hud-box" style="text-align:right">
+      <div id="waveLabel">WAVE 1</div>
+    </div>
+  </div>
+
+  <div id="controls">
+    <div class="ctrl-side">
+      <div class="btn" id="leftBtn">◀</div>
+      <div class="btn" id="rightBtn">▶</div>
+    </div>
+    <div id="joyZone">
+      <div id="joyBase"></div>
+      <div id="joyKnob"></div>
+    </div>
+  </div>
+
+  <div id="gameOver">
+    <h2>Wrecked...</h2>
+    <p>The chase got the better of you.</p>
+    <button id="retryBtn">Try Again</button>
+  </div>
+  <div id="gameWin">
+    <h2>We lost them!</h2>
+    <p>Continuing...</p>
+  </div>
+</div>
+
+<audio id="bgm" loop preload="auto">
+  <source src="assets/bgm.mp3" type="audio/mpeg">
+  <source src="bgm.mp3" type="audio/mpeg">
+</audio>
+
+<script>
+// ============================================================
+// ASSETS & STATE
+// ============================================================
+const bgm = document.getElementById('bgm');
+bgm.volume = 0.45;
+
+function playBGM() {
+  bgm.currentTime = 0;
+  bgm.play().catch(() => {});
+}
+function stopBGM() {
+  bgm.pause();
+  bgm.currentTime = 0;
+}
+const ASSETS = {
+  bg: 'assets/vnbg.png',
+  chuuya: 'assets/chuuya.png',
+  shahina: 'assets/shahina.png',
+  dazai: 'assets/dazai.png',
+  bike: 'assets/bike.png',
+  roadA: 'assets/roadA.jpg',
+  roadB: 'assets/roadB.jpg',
+  car1: 'assets/car1.png',
+  car2: 'assets/car2.png',
+  car3: 'assets/car3.png',
+  obs1: 'assets/obstacle1.png',
+  obs2: 'assets/obstacle2.png',
+};
+
+const images = {};
+let loaded = 0;
+const totalAssets = Object.keys(ASSETS).length;
+
+function loadImages(cb) {
+  for (const [k, src] of Object.entries(ASSETS)) {
+    const img = new Image();
+    img.onload = img.onerror = () => { loaded++; if (loaded >= totalAssets) cb(); };
+    img.src = src;
+    images[k] = img;
+  }
+}
+
+// ============================================================
+// DIALOGUES
+// ============================================================
+const VN1 = [
+  { speaker: "Shahina", side: "right", text: "AM I GONNA DIE THIS WAYYYYY?!\nWITHOUT EVEN BEING REUNITED WITH MY BELOVED?!" },
+  { speaker: "Chuuya", side: "left", text: "HUH?!\nWHO'S WHINING?!" },
+  { speaker: "Shahina", side: "right", text: "*continues sobbing at a volume that could shatter glass*" },
+  { speaker: "Chuuya", side: "left", text: "...Hey, woman?\n\nDid I... do this to you?" },
+  { speaker: "Shahina", side: "right", text: "YES, YOU MONSTER!!\nYOU DID THIS TO ME!!\nWHAT DID I EVEN DO TO DESERVE THIS?!" },
+  { speaker: "Chuuya", side: "left", text: "LOOK, I can't exactly heal your wounds, but...\n\nMaybe I can reunite you with your beloved.\nI'll go Arahabaki mode and get you there as fast as possible.\n\n...Who's your beloved, by the way?" },
+  { speaker: "Shahina", side: "right", text: "GASP.\nYOU DARE QUESTION MY LOVE FOR HIM?!\nIT'S OBVIOUSLY DAZAI!!" },
+  { speaker: "Chuuya", side: "left", text: "WHAAAAAAAAAAAAAAAAA—?!\nTHAT WOMANIZER?!\nTHAT BASTARD?!\n\n...I sincerely hope you're of sound mind." },
+  { speaker: "Shahina", side: "right", text: "DON'T YOU DARE SPEAK OF HIM LIKE THAT!!\n\nBYYYY THE WAYYYYY...\n\nYOU SAID YOU WERE GONNA REUNITE ME WITH HIM, RIGHT??\nEhehehehehehe~" },
+  { speaker: "Chuuya", side: "left", text: "THAT BASTARD—?!\nFINE!! YES!! I'LL LET YOU MEET HIM!!\nBEFORE I STRANGLE THAT GUY TO DEATH WITH MY BARE HANDS!!" },
+  { speaker: "Shahina", side: "right", text: "EHEHEHEHEHEHEHEHE~" },
+  { speaker: "Chuuya", side: "left", text: "WE'RE UNDER ATTACK!!\n\nHOP ON!!" },
+  { speaker: "Shahina", side: "right", text: "HEHEHEHEHEHEHEHEHEHE—" },
+];
+
+const VN2 = [
+  { speaker: "Chuuya", side: "left", text: "I think we've lost 'em. It's safe now." },
+  { speaker: "Shahina", side: "right", text: "BRING ME TO DAZAIIIIII!!" },
+  { speaker: "Chuuya", side: "left", text: "Tch. Shut your mouth, woman. That bastard is about to be strangled to death." },
+  { speaker: "Shahina", side: "right", text: "I WON'T LET THAT HAPPEN!!\nAnd either way, my beloved will change into the Dazai I want him to be after meeting me." },
+  { speaker: "Chuuya", side: "left", text: "Heh. We'll see about that." },
+  { speaker: "Dazai", side: "left", text: "Ara~? Chuuya?\n\nWhat a pleasant surprise. I didn't know you were offering free transportation services now.", char: "dazai" },
+  { speaker: "Chuuya", side: "left", text: "YOU LITTLE—!!", char: "chuuya" },
+  { speaker: "Shahina", side: "right", text: "DAZAIIIIIIII!!" },
+  { speaker: "Dazai", side: "left", text: "Hm?\n\nOh? And who's this lovely young lady?", char: "dazai" },
+  { speaker: "Shahina", side: "right", text: "...He spoke to me." },
+  { speaker: "Chuuya", side: "left", text: "I’m so done with this.", char: "chuuya" },
+  { speaker: "Dazai", side: "left", text: "My, my. Such a passionate gaze.\nTell me, have we met before? Or have you simply fallen victim to my irresistible charm?", char: "dazai" },
+  { speaker: "Shahina", side: "right", text: "HE'S EVEN MORE BEAUTIFUL IN PERSON—" },
+  { speaker: "Chuuya", side: "left", text: "I'M GOING TO THROW UP.", char: "chuuya" },
+  { speaker: "Dazai", side: "left", text: "So, what's your name?", char: "dazai" },
+  { speaker: "Shahina", side: "right", text: "Shahina.\n\nAnd I'm going to marry you." },
+  { speaker: "Chuuya", side: "left", text: "SHE'S WHAT?!", char: "chuuya" },
+  { speaker: "Dazai", side: "left", text: "...\n\nWell, that's certainly a new one.", char: "dazai" },
+  { speaker: "Shahina", side: "right", text: "Ehehehehe~" },
+  { speaker: "Dazai", side: "left", text: "Chuuya, you seem to have acquired a rather interesting admirer.", char: "dazai" },
+  { speaker: "Chuuya", side: "left", text: "ACQUIRED?!\nSHE MADE ME DRIVE THROUGH HALF OF YOKOHAMA WHILE PEOPLE WERE TRYING TO KILL US!!", char: "chuuya" },
+  { speaker: "Dazai", side: "left", text: "Oh? And here I thought you were finally doing something useful with your life.", char: "dazai" },
+  { speaker: "Chuuya", side: "left", text: "I'M GOING TO KILL YOU.", char: "chuuya" },
+  { speaker: "Shahina", side: "right", text: "NOOOOOOO!!\nYOU CAN'T KILL MY FUTURE HUSBAND!!" },
+  { speaker: "Chuuya", side: "left", text: "THEN TELL YOUR FUTURE HUSBAND TO STOP RUNNING HIS MOUTH!!", char: "chuuya" },
+  { speaker: "Dazai", side: "left", text: "Say, Shahina...\n\nWell, before we make any commitments, I do have two very important questions.", char: "dazai" },
+  { speaker: "Shahina", side: "right", text: "Anything, my beloved. ANYTHING AT ALL." },
+  { speaker: "Dazai", side: "left", text: "First…\nWould you let me drink as much as I want?", char: "dazai" },
+  { speaker: "Shahina", side: "right", text: "…" },
+  { speaker: "Chuuya", side: "left", text: "PFFT—", char: "chuuya" },
+  { speaker: "Dazai", side: "left", text: "And second, would you be willing to pay off my debts?", char: "dazai" },
+  { speaker: "Shahina", side: "right", text: "…" },
+  { speaker: "Chuuya", side: "left", text: "HAHAHAHAHAHAHAHAHAHA!!", char: "chuuya" },
+  { speaker: "Dazai", side: "left", text: "Oh? Is something wrong, Shahina-chan?\nYou did say anything.", char: "dazai" },
+  { speaker: "Shahina", side: "right", text: "I—" },
+  { speaker: "Chuuya", side: "left", text: "GO ON, WOMAN! TELL HIM HOW YOUR BEAUTIFUL LOVE STORY JUST TURNED INTO A BANK LOAN!", char: "chuuya" },
+  { speaker: "Dazai", side: "left", text: "Chuuya, please. This is a private discussion between me and my future wife.", char: "dazai" },
+  { speaker: "Chuuya", side: "left", text: "I'M GOING TO KILL YOU, YOU BANDAGED BASTARD!!", char: "chuuya" },
+  { speaker: "Dazai", side: "left", text: "See, Shahina-chan? This is precisely why I need a financially stable wife. My life is already full of liabilities.", char: "dazai" },
+  { speaker: "Shahina", side: "right", text: "I'LL PAY OFF EVERY SINGLE DEBT, DAZAI!!" },
+  { speaker: "Chuuya", side: "left", text: "SHE'S ACTUALLY GOING TO DO IT?!", char: "chuuya" },
+  { speaker: "Dazai", side: "left", text: "Oh, how touching!", char: "dazai" },
+  { speaker: "Chuuya", side: "left", text: "YOU'RE NOT EVEN GOING TO PRETEND TO LOVE HER?!", char: "chuuya" },
+  { speaker: "Dazai", side: "left", text: "Chuuya, my dear friend…\nLove is temporary.\nFinancial security is forever.", char: "dazai" },
+  { speaker: "Shahina", side: "right", text: "DAZAI, YOU CAN DRINK ALL YOU WANT!!" },
+  { speaker: "Dazai", side: "left", text: "Ah, what a wonderful woman. I can already picture our future together.", char: "dazai" },
+  { speaker: "Chuuya", side: "left", text: "YOU'VE KNOWN HER FOR THIRTY SECONDS!!", char: "chuuya" },
+  { speaker: "Dazai", side: "left", text: "And yet, she understands me better than you ever have.", char: "dazai" },
+  { speaker: "Chuuya", side: "left", text: "I'M GOING TO THROW BOTH OF YOU OFF THIS BRIDGE.", char: "chuuya" },
+  { speaker: "Shahina", side: "right", text: "DON'T YOU DARE TOUCH MY BELOVED!!\n\n*picks up a brick*" },
+  { speaker: "Chuuya", side: "left", text: "…Where the hell did you get that?", char: "chuuya" },
+  { speaker: "Shahina", side: "right", text: "LOVE FINDS A WAY.\n\nBONK." },
+  { speaker: "Chuuya", side: "left", text: "WHY IS IT ALWAYS A BRICK?!", char: "chuuya" },
+  { speaker: "Dazai", side: "left", text: "Ahaha! Chuuya, you really do have a way of attracting violent women.", char: "dazai" },
+  { speaker: "Chuuya", side: "left", text: "SHUT UP!!", char: "chuuya" },
+  { speaker: "Dazai", side: "left", text: "Now then, Shahina-chan. About those debts…", char: "dazai" },
+  { speaker: "Chuuya", side: "left", text: "THAT'S IT. I'M DONE.\n\nI SURVIVED THE PORT MAFIA. I SURVIVED ARAHABAKI. I'VE SURVIVED YEARS OF DEALING WITH THIS WORTHLESS PIECE OF TRASH.\n\nAND NOW I'M SUPPOSED TO DRIVE YOU TWO AROUND WHILE YOU PLAN YOUR FINANCIAL DOWNFALL?!", char: "chuuya" },
+  { speaker: "Dazai", side: "left", text: "Technically, you offered to bring her to me.", char: "dazai" },
+  { speaker: "Chuuya", side: "left", text: "I HATE YOU.", char: "chuuya" },
+  { speaker: "Shahina", side: "right", text: "DAZAI, TELL HIM TO LET YOU GO!" },
+  { speaker: "Dazai", side: "left", text: "Chuuya, please let go of me. You're wrinkling my coat.", char: "dazai" },
+  { speaker: "Chuuya", side: "left", text: "I'M GOING TO WRINKLE YOUR ENTIRE EXISTENCE.", char: "chuuya" },
+  { speaker: "Dazai", side: "left", text: "Oh, and Shahina-chan?\nDo you happen to have any money on you right now?", char: "dazai" },
+  { speaker: "Chuuya", side: "left", text: "…\n\nI'M LEAVING.", char: "chuuya" },
+  { speaker: "Shahina", side: "right", text: "WAIT FOR US, CHUUYA!!" },
+  { speaker: "Dazai", side: "left", text: "Yes, do wait for us, Chuuya. After all, you're the one paying for transportation.", char: "dazai" },
+  { speaker: "Chuuya", side: "left", text: "I'M GOING TO KILL YOU BOTH!!", char: "chuuya" },
+  { speaker: "Dazai", side: "left", text: "Ah. What a lovely day.", char: "dazai" },
+  { speaker: "???", side: "none", text: "457143" },
+];
+
+// ============================================================
+// SCREEN MANAGEMENT
+// ============================================================
+const screens = {
+  orient: document.getElementById('orient'),
+  video: document.getElementById('videoScreen'),
+  vn: document.getElementById('vnScreen'),
+  game: document.getElementById('gameScreen'),
+};
+
+function showScreen(name) {
+  Object.values(screens).forEach(s => s.classList.remove('active'));
+  screens[name].classList.add('active');
+}
+
+// ============================================================
+// VIDEO
+// ============================================================
+const videoEl = document.getElementById('mainVideo');
+let afterVideo = null;
+
+function playVideo(src, next) {
+  showScreen('video');
+  afterVideo = next;
+  videoEl.src = src;
+  videoEl.play().catch(() => {});
+  videoEl.onended = () => { if (afterVideo) afterVideo(); };
+}
+
+document.getElementById('videoSkip').onclick = () => {
+  videoEl.pause();
+  if (afterVideo) afterVideo();
+};
+
+// ============================================================
+// VISUAL NOVEL
+// ============================================================
+let vnData = [];
+let vnIndex = 0;
+let vnCallback = null;
+const vnBg = document.getElementById('vnBg');
+const vnLeft = document.getElementById('vnLeft');
+const vnRight = document.getElementById('vnRight');
+const vnName = document.getElementById('vnName');
+const vnText = document.getElementById('vnText');
+
+function startVN(dialogues, callback) {
+  vnData = dialogues;
+  vnIndex = 0;
+  vnCallback = callback;
+  vnBg.style.backgroundImage = `url(${ASSETS.bg})`;
+  showScreen('vn');
+  showVNLine();
+}
+
+function showVNLine() {
+  if (vnIndex >= vnData.length) {
+    if (vnCallback) vnCallback();
+    return;
+  }
+  const line = vnData[vnIndex];
+  vnName.textContent = line.speaker;
+  vnText.textContent = line.text;
+
+  // special code line
+  if (line.speaker === "???") {
+    vnName.style.background = "#ffd700";
+    vnName.style.color = "#000";
+    vnText.style.color = "#ffd700";
+    vnText.style.fontSize = "2.2rem";
+    vnText.style.textAlign = "center";
+    vnText.style.letterSpacing = "0.35rem";
+    vnText.style.fontWeight = "800";
+  } else {
+    vnName.style.background = "";
+    vnName.style.color = "";
+    vnText.style.color = "";
+    vnText.style.fontSize = "";
+    vnText.style.textAlign = "";
+    vnText.style.letterSpacing = "";
+    vnText.style.fontWeight = "";
+  }
+
+  // characters
+  const leftChar = line.side === "left" ? (line.char || (line.speaker === "Dazai" ? "dazai" : "chuuya")) : null;
+  const rightChar = line.side === "right" ? "shahina" : null;
+
+  if (line.side === "none") {
+    vnLeft.classList.add('hidden');
+    vnRight.classList.add('hidden');
+  } else {
+    if (leftChar) {
+      vnLeft.src = ASSETS[leftChar];
+      vnLeft.classList.remove('hidden', 'dim');
+    } else {
+      vnLeft.classList.add('hidden');
+    }
+    if (rightChar) {
+      vnRight.src = ASSETS.shahina;
+      vnRight.classList.remove('hidden', 'dim');
+    } else {
+      vnRight.classList.add('hidden');
+    }
+    // dim the non-speaking side if both present
+    if (leftChar && rightChar) {
+      if (line.side === "left") vnRight.classList.add('dim');
+      else vnLeft.classList.add('dim');
+    }
+  }
+}
+
+document.getElementById('vnScreen').addEventListener('click', () => {
+  vnIndex++;
+  showVNLine();
+});
+
+// ============================================================
+// GAME ENGINE
+// ============================================================
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+let W, H;
+let animId = null;
+let gameRunning = false;
+
+const state = {
+  player: { x: 0, y: 0, w: 74, h: 94, health: 100, invuln: 0, speedMul: 1, slowTimer: 0, borderTimer: 0 },
+  bullets: [],
+  enemies: [],
+  obstacles: [],
+  particles: [],
+  scroll: 0,
+  baseSpeed: 5.04,  // +20% from 4.2
+  kills: 0,
+  spawnTimer: 0,
+  obsTimer: 0,
+  wave: 1,
+  roadLeft: 0,
+  roadRight: 0,
+  keys: { left: false, right: false },
+  shooting: false,
+  shootDir: { x: 0, y: -1 },
+  shootCooldown: 0,
+};
+
+function resize() {
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+  // Match the visible asphalt more accurately to the roadA/B art borders
+  const roadWidth = W * 0.56;
+  state.roadLeft = (W - roadWidth) / 2;
+  state.roadRight = state.roadLeft + roadWidth;
+  state.player.x = W / 2;
+  state.player.y = H * 0.68;
+}
+window.addEventListener('resize', resize);
+
+function resetGame() {
+  state.player.health = 100;
+  state.player.invuln = 0;
+  state.player.speedMul = 1;
+  state.player.slowTimer = 0;
+  state.player.borderTimer = 0;
+  state.player.x = W / 2;
+  state.bullets = [];
+  state.enemies = [];
+  state.obstacles = [];
+  state.particles = [];
+  state.scroll = 0;
+  state.kills = 0;
+  state.spawnTimer = 0;
+  state.obsTimer = 20;
+  state.wave = 1;
+  state.shootCooldown = 0;
+  document.getElementById('gameOver').style.display = 'none';
+  document.getElementById('gameWin').style.display = 'none';
+  updateHUD();
+}
+
+function updateHUD() {
+  document.getElementById('healthBar').style.width = state.player.health + '%';
+  document.getElementById('killCount').textContent = state.kills + ' / 40';
+  document.getElementById('waveLabel').textContent = 'WAVE ' + state.wave;
+}
+
+function spawnEnemy() {
+  // Chase cars come from BEHIND the bike (bottom of screen) and catch up
+  const types = ['car1', 'car2', 'car3'];
+  const type = types[Math.floor(Math.random() * types.length)];
+  const hp = 2 + Math.floor(state.wave * 0.8);
+  const margin = 28;
+  const x = state.roadLeft + margin + Math.random() * (state.roadRight - state.roadLeft - margin * 2);
+  state.enemies.push({
+    x,
+    y: H + 70,                 // spawn below the screen (behind the player)
+    w: 50, h: 72,              // +20%
+    hp, maxHp: hp,
+    type,
+    // relative speed: higher than scroll so they close the gap from behind
+    catchSpeed: 2.8 + Math.random() * 1.6 + state.wave * 0.25
+  });
+}
+
+function spawnObstacle() {
+  // Only on the road surface, slightly ahead of the bike
+  const type = Math.random() < 0.5 ? 'obs1' : 'obs2';
+  const margin = 48;
+  const x = state.roadLeft + margin + Math.random() * (state.roadRight - state.roadLeft - margin * 2);
+  state.obstacles.push({
+    x,
+    y: -60,                    // appear ahead (top of screen)
+    w: type === 'obs1' ? 77 : 98,   // +20%
+    h: type === 'obs1' ? 55 : 43,
+    type
+  });
+}
+
+function hurtPlayer(amount) {
+  if (state.player.invuln > 0) return;
+  state.player.health = Math.max(0, state.player.health - amount);
+  state.player.invuln = 45;
+  state.player.speedMul = 0.35;
+  state.player.slowTimer = 60; // ~1 sec at 60fps
+  // spark particles
+  for (let i = 0; i < 12; i++) {
+    state.particles.push({
+      x: state.player.x, y: state.player.y,
+      vx: (Math.random() - 0.5) * 6,
+      vy: (Math.random() - 0.5) * 6,
+      life: 20 + Math.random() * 15,
+      color: '#ff6b6b'
+    });
+  }
+  updateHUD();
+  if (state.player.health <= 0) {
+    gameRunning = false;
+    stopBGM();
+    document.getElementById('gameOver').style.display = 'flex';
+  }
+}
+
+function update(dt) {
+  if (!gameRunning) return;
+
+  const p = state.player;
+  const speed = state.baseSpeed * p.speedMul;
+
+  // movement
+  if (state.keys.left) p.x -= 5.5;
+  if (state.keys.right) p.x += 5.5;
+  // clamp to road borders
+  const edgePad = p.w / 2 + 6;
+  p.x = Math.max(state.roadLeft + edgePad, Math.min(state.roadRight - edgePad, p.x));
+
+  // Border contact damage: lose health if pressed against the edge for > 2 seconds
+  const nearLeft = p.x <= state.roadLeft + edgePad + 2;
+  const nearRight = p.x >= state.roadRight - edgePad - 2;
+  if (nearLeft || nearRight) {
+    p.borderTimer++;
+    if (p.borderTimer > 120) {          // ~2 seconds at 60fps
+      hurtPlayer(8);
+      p.borderTimer = 90;               // small grace before next tick
+    }
+  } else {
+    p.borderTimer = 0;
+  }
+
+  // slow recovery
+  if (p.slowTimer > 0) {
+    p.slowTimer--;
+    if (p.slowTimer <= 0) p.speedMul = 1;
+  }
+  if (p.invuln > 0) p.invuln--;
+
+  // scroll – road texture rolls upward (from bottom) so it feels like driving forward
+  state.scroll -= speed;
+
+  // shooting – thin sparkling line bullets (from reference logic)
+  if (state.shootCooldown > 0) state.shootCooldown--;
+  if (state.shooting && state.shootCooldown <= 0) {
+    const len = Math.sqrt(state.shootDir.x ** 2 + state.shootDir.y ** 2) || 1;
+    const speed = 16;
+    state.bullets.push({
+      x: p.x,
+      y: p.y - p.h * 0.28,
+      vx: (state.shootDir.x / len) * speed,
+      vy: (state.shootDir.y / len) * speed,
+      life: 1.0,
+      len: 18 + Math.random() * 10,
+      spark: Math.random() * Math.PI * 2
+    });
+    state.shootCooldown = 8;
+  }
+
+  // update bullets
+  for (let i = state.bullets.length - 1; i >= 0; i--) {
+    const b = state.bullets[i];
+    b.x += b.vx;
+    b.y += b.vy;
+    b.life -= 0.018;
+    b.spark += 0.4;
+    if (b.life <= 0 || b.y < -30 || b.y > H + 30 || b.x < -30 || b.x > W + 30) {
+      state.bullets.splice(i, 1);
+    }
+  }
+
+  // enemies
+  const difficulty = 1 + Math.floor(state.kills / 10);
+  state.wave = difficulty;
+  const spawnRate = Math.max(25, 70 - difficulty * 8);
+
+  state.spawnTimer++;
+  if (state.spawnTimer > spawnRate && state.enemies.length < 6 + difficulty) {
+    spawnEnemy();
+    state.spawnTimer = 0;
+  }
+
+  for (let i = state.enemies.length - 1; i >= 0; i--) {
+    const e = state.enemies[i];
+    // Road now rolls upward. Objects fixed on road move up (y decreases).
+    // Chase cars start behind (bottom) and catch up by moving upward faster.
+    e.y -= speed * 0.35 + e.catchSpeed;
+
+    // slight horizontal drift toward player for pressure
+    e.x += (p.x - e.x) * 0.008;
+
+    // keep them on the road
+    e.x = Math.max(state.roadLeft + 20, Math.min(state.roadRight - 20, e.x));
+
+    // bullet collision
+    for (let j = state.bullets.length - 1; j >= 0; j--) {
+      const b = state.bullets[j];
+      if (Math.abs(b.x - e.x) < e.w * 0.45 && Math.abs(b.y - e.y) < e.h * 0.45) {
+        e.hp--;
+        state.bullets.splice(j, 1);
+        for (let k = 0; k < 6; k++) {
+          state.particles.push({
+            x: e.x, y: e.y,
+            vx: (Math.random() - 0.5) * 5,
+            vy: (Math.random() - 0.5) * 5,
+            life: 12,
+            color: '#ffcc00'
+          });
+        }
+        if (e.hp <= 0) {
+          state.kills++;
+          updateHUD();
+          for (let k = 0; k < 18; k++) {
+            state.particles.push({
+              x: e.x, y: e.y,
+              vx: (Math.random() - 0.5) * 8,
+              vy: (Math.random() - 0.5) * 8,
+              life: 20 + Math.random() * 15,
+              color: ['#ff6b6b', '#ffd93d', '#ff9f43'][Math.floor(Math.random()*3)]
+            });
+          }
+          state.enemies.splice(i, 1);
+          if (state.kills >= 40) {
+            gameRunning = false;
+            stopBGM();
+            document.getElementById('gameWin').style.display = 'flex';
+            setTimeout(() => startVN(VN2, () => {}), 1200);
+          }
+          break;
+        }
+      }
+    }
+    // player collision
+    if (Math.abs(e.x - p.x) < (e.w + p.w) * 0.35 && Math.abs(e.y - p.y) < (e.h + p.h) * 0.35) {
+      hurtPlayer(18);
+      e.y += 55; // knock them back (behind the bike)
+    }
+    // remove if they go way ahead or far behind
+    if (e.y < -120 || e.y > H + 140) state.enemies.splice(i, 1);
+  }
+
+  // obstacles (fixed on the road → move upward with the road scroll)
+  state.obsTimer++;
+  if (state.obsTimer > 85 - difficulty * 6) {
+    if (Math.random() < 0.72) spawnObstacle();
+    state.obsTimer = 0;
+  }
+  for (let i = state.obstacles.length - 1; i >= 0; i--) {
+    const o = state.obstacles[i];
+    // Approach the player from the front (top of screen)
+    o.y += speed * 1.15;
+    if (Math.abs(o.x - p.x) < (o.w + p.w) * 0.32 && Math.abs(o.y - p.y) < (o.h + p.h) * 0.32) {
+      hurtPlayer(12);
+      state.obstacles.splice(i, 1);
+      continue;
+    }
+    if (o.y > H + 80) state.obstacles.splice(i, 1);
+  }
+
+  // particles
+  for (let i = state.particles.length - 1; i >= 0; i--) {
+    const pt = state.particles[i];
+    pt.x += pt.vx;
+    pt.y += pt.vy;
+    pt.life--;
+    if (pt.life <= 0) state.particles.splice(i, 1);
+  }
+}
+
+function draw() {
+  // Seamless scrolling road – cycle roadA + roadB only
+  const roads = [images.roadA, images.roadB];
+  const ready = roads.every(r => r && r.complete);
+  if (ready) {
+    const src = roads[0];
+    const tileH = Math.floor(W * (src.height / src.width));
+    const period = tileH * roads.length;
+    let offset = state.scroll % period;
+    if (offset < 0) offset += period;
+
+    for (let i = -1; i <= Math.ceil(H / tileH) + 2; i++) {
+      const y = i * tileH - offset;
+      const img = roads[((i % roads.length) + roads.length) % roads.length];
+      ctx.drawImage(img, 0, y, W, tileH + 1);
+    }
+  } else {
+    ctx.fillStyle = '#1a1a22';
+    ctx.fillRect(0, 0, W, H);
+  }
+
+  // Lighter side vignette – let the image’s own building borders show clearly
+  const gradL = ctx.createLinearGradient(0, 0, state.roadLeft, 0);
+  gradL.addColorStop(0, 'rgba(0,0,0,0.35)');
+  gradL.addColorStop(0.85, 'rgba(0,0,0,0)');
+  ctx.fillStyle = gradL;
+  ctx.fillRect(0, 0, state.roadLeft, H);
+
+  const gradR = ctx.createLinearGradient(state.roadRight, 0, W, 0);
+  gradR.addColorStop(0, 'rgba(0,0,0,0)');
+  gradR.addColorStop(0.15, 'rgba(0,0,0,0)');
+  gradR.addColorStop(1, 'rgba(0,0,0,0.35)');
+  ctx.fillStyle = gradR;
+  ctx.fillRect(state.roadRight, 0, W - state.roadRight, H);
+
+  // Very subtle edge indicators that follow the image borders
+  ctx.strokeStyle = 'rgba(255, 210, 80, 0.18)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(state.roadLeft, 0); ctx.lineTo(state.roadLeft, H);
+  ctx.moveTo(state.roadRight, 0); ctx.lineTo(state.roadRight, H);
+  ctx.stroke();
+
+  // obstacles
+  for (const o of state.obstacles) {
+    const img = images[o.type];
+    if (img.complete) {
+      ctx.drawImage(img, o.x - o.w / 2, o.y - o.h / 2, o.w, o.h);
+    }
+  }
+
+  // enemies
+  for (const e of state.enemies) {
+    const img = images[e.type];
+    if (img.complete) {
+      ctx.drawImage(img, e.x - e.w / 2, e.y - e.h / 2, e.w, e.h);
+    }
+    // tiny hp bar
+    if (e.hp < e.maxHp) {
+      ctx.fillStyle = '#333';
+      ctx.fillRect(e.x - 18, e.y - e.h / 2 - 10, 36, 5);
+      ctx.fillStyle = '#e63946';
+      ctx.fillRect(e.x - 18, e.y - e.h / 2 - 10, 36 * (e.hp / e.maxHp), 5);
+    }
+  }
+
+  // bullets – thin sparkling lines (replicated logic)
+  for (const b of state.bullets) {
+    const ang = Math.atan2(b.vy, b.vx);
+    const half = b.len * 0.5 * b.life;
+    const x1 = b.x - Math.cos(ang) * half;
+    const y1 = b.y - Math.sin(ang) * half;
+    const x2 = b.x + Math.cos(ang) * half;
+    const y2 = b.y + Math.sin(ang) * half;
+
+    // Bright core line
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.strokeStyle = `rgba(255, 240, 180, ${0.95 * b.life})`;
+    ctx.lineWidth = 2.5;
+    ctx.lineCap = 'round';
+    ctx.shadowColor = '#ffeaa7';
+    ctx.shadowBlur = 14;
+    ctx.stroke();
+
+    // Sparkles along the line
+    for (let s = 0; s < 3; s++) {
+      const t = (s / 3) + Math.sin(b.spark + s) * 0.12;
+      const sx = x1 + (x2 - x1) * t;
+      const sy = y1 + (y2 - y1) * t;
+      const sparkAlpha = (0.55 + 0.45 * Math.sin(b.spark * 2.2 + s * 1.7)) * b.life;
+      ctx.beginPath();
+      ctx.arc(sx, sy, 1.4 + Math.sin(b.spark + s) * 1.1, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(255, 255, 230, ${sparkAlpha})`;
+      ctx.shadowBlur = 7;
+      ctx.fill();
+    }
+    ctx.shadowBlur = 0;
+  }
+
+  // particles
+  for (const pt of state.particles) {
+    ctx.globalAlpha = Math.min(1, pt.life / 15);
+    ctx.fillStyle = pt.color;
+    ctx.beginPath();
+    ctx.arc(pt.x, pt.y, 2.2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+
+  // player bike
+  const p = state.player;
+  if (p.invuln > 0 && Math.floor(p.invuln / 3) % 2 === 0) {
+    // flash
+  } else {
+    const bike = images.bike;
+    if (bike.complete) {
+      const bw = p.w * 1.15;
+      const bh = p.h * 1.15;
+      ctx.drawImage(bike, p.x - bw / 2, p.y - bh / 2, bw, bh);
+    } else {
+      ctx.fillStyle = '#e63946';
+      ctx.fillRect(p.x - p.w / 2, p.y - p.h / 2, p.w, p.h);
+    }
+  }
+}
+
+function loop() {
+  update(1);
+  draw();
+  animId = requestAnimationFrame(loop);
+}
+
+function startGame() {
+  showScreen('game');
+  resize();
+  resetGame();
+  gameRunning = true;
+  playBGM();
+  if (animId) cancelAnimationFrame(animId);
+  loop();
+}
+
+// Controls
+const leftBtn = document.getElementById('leftBtn');
+const rightBtn = document.getElementById('rightBtn');
+
+function bindHold(el, key) {
+  const start = (e) => { e.preventDefault(); state.keys[key] = true; el.classList.add('active'); };
+  const end = (e) => { e.preventDefault(); state.keys[key] = false; el.classList.remove('active'); };
+  el.addEventListener('touchstart', start, { passive: false });
+  el.addEventListener('touchend', end, { passive: false });
+  el.addEventListener('touchcancel', end, { passive: false });
+  el.addEventListener('mousedown', start);
+  el.addEventListener('mouseup', end);
+  el.addEventListener('mouseleave', end);
+}
+bindHold(leftBtn, 'left');
+bindHold(rightBtn, 'right');
+
+// Joystick for aiming / shooting
+const joyZone = document.getElementById('joyZone');
+const joyKnob = document.getElementById('joyKnob');
+let joyActive = false;
+
+function joyStart(e) {
+  e.preventDefault();
+  joyActive = true;
+  state.shooting = true;
+  joyMove(e);
+}
+function joyMove(e) {
+  if (!joyActive) return;
+  const rect = joyZone.getBoundingClientRect();
+  const touch = e.touches ? e.touches[0] : e;
+  let dx = touch.clientX - (rect.left + rect.width / 2);
+  let dy = touch.clientY - (rect.top + rect.height / 2);
+  const max = 36;
+  const dist = Math.sqrt(dx * dx + dy * dy);
+  if (dist > max) { dx = dx / dist * max; dy = dy / dist * max; }
+  joyKnob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+  if (dist > 8) {
+    state.shootDir.x = dx / max;
+    state.shootDir.y = dy / max;
+  }
+}
+function joyEnd(e) {
+  e.preventDefault();
+  joyActive = false;
+  state.shooting = false;
+  joyKnob.style.transform = 'translate(-50%, -50%)';
+  state.shootDir = { x: 0, y: -1 };
+}
+joyZone.addEventListener('touchstart', joyStart, { passive: false });
+joyZone.addEventListener('touchmove', joyMove, { passive: false });
+joyZone.addEventListener('touchend', joyEnd, { passive: false });
+joyZone.addEventListener('touchcancel', joyEnd, { passive: false });
+joyZone.addEventListener('mousedown', joyStart);
+window.addEventListener('mousemove', joyMove);
+window.addEventListener('mouseup', joyEnd);
+
+// also allow keyboard for testing
+window.addEventListener('keydown', e => {
+  if (e.key === 'ArrowLeft' || e.key === 'a') state.keys.left = true;
+  if (e.key === 'ArrowRight' || e.key === 'd') state.keys.right = true;
+  if (e.key === ' ' || e.key === 'j') state.shooting = true;
+});
+window.addEventListener('keyup', e => {
+  if (e.key === 'ArrowLeft' || e.key === 'a') state.keys.left = false;
+  if (e.key === 'ArrowRight' || e.key === 'd') state.keys.right = false;
+  if (e.key === ' ' || e.key === 'j') state.shooting = false;
+});
+
+document.getElementById('retryBtn').onclick = () => {
+  resetGame();
+  gameRunning = true;
+  playBGM();
+};
+
+// ============================================================
+// BOOT
+// ============================================================
+document.getElementById('startBtn').onclick = () => {
+  // try lock landscape
+  if (screen.orientation && screen.orientation.lock) {
+    screen.orientation.lock('landscape').catch(() => {});
+  }
+  loadImages(() => {
+    playVideo('clip1.mp4', () => {
+      startVN(VN1, () => {
+        playVideo('clip2.mp4', () => {
+          startGame();
+        });
+      });
+    });
+  });
+};
+
+// prevent scroll / bounce
+document.body.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
+</script>
+</body>
+</html>
