@@ -2,737 +2,952 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>For Shahina ❤️</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Highway Pursuit</title>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; touch-action: none; }
+  :root {
+    --bg: #0a0a12;
+    --accent: #e63946;
+    --text: #f1f1f1;
+    --panel: rgba(10,10,20,0.85);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; user-select: none; }
   html, body {
     width: 100%; height: 100%;
     overflow: hidden;
-    background: #000;
-    font-family: 'Segoe UI', system-ui, sans-serif;
-    color: #fff;
-  }
-  #game-container {
-    width: 100vw; height: 100vh;
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Segoe UI", system-ui, sans-serif;
+    touch-action: none;
   }
   .screen {
-    position: absolute;
-    inset: 0;
+    position: absolute; inset: 0;
     display: none;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    background: #000;
   }
   .screen.active { display: flex; }
 
-  /* START */
-  #start-screen {
-    background: linear-gradient(135deg, #1a0033, #000);
+  /* ===== ORIENTATION ===== */
+  #orient {
+    background: #000;
+    z-index: 1000;
     text-align: center;
-    padding: 20px;
+    padding: 2rem;
   }
-  #start-screen h1 {
-    font-size: clamp(1.5rem, 5vw, 2.5rem);
-    margin-bottom: 1rem;
-    color: #ff6b9d;
-    text-shadow: 0 0 20px #ff6b9d88;
-    display: none;
+  #orient h1 { font-size: 1.6rem; margin-bottom: 1rem; color: #ff6b6b; }
+  #orient p { opacity: 0.8; margin-bottom: 2rem; }
+  #orient .phone-icon {
+    font-size: 4rem;
+    animation: rotateHint 2s ease-in-out infinite;
   }
-  #start-screen p {
-    font-size: clamp(1rem, 3vw, 1.4rem);
-    margin-bottom: 2rem;
-    opacity: 0.9;
+  @keyframes rotateHint {
+    0%, 100% { transform: rotate(0deg); }
+    50% { transform: rotate(90deg); }
   }
-  .btn {
-    background: linear-gradient(90deg, #e63946, #ff6b9d);
-    border: none;
-    color: white;
-    padding: 14px 36px;
+  #startBtn {
+    margin-top: 1.5rem;
+    padding: 0.9rem 2.4rem;
     font-size: 1.2rem;
-    border-radius: 50px;
+    background: var(--accent);
+    border: none;
+    border-radius: 12px;
+    color: white;
+    font-weight: 700;
     cursor: pointer;
-    box-shadow: 0 4px 20px #e6394688;
-    transition: transform 0.15s;
   }
-  .btn:active { transform: scale(0.95); }
 
-  /* VIDEO */
-  #video-screen video {
+  /* ===== VIDEO ===== */
+  #videoScreen video {
     width: 100%; height: 100%;
     object-fit: contain;
     background: #000;
   }
-  #skip-video {
+  #videoSkip {
     position: absolute;
-    bottom: 20px; right: 20px;
-    background: rgba(0,0,0,0.7);
+    bottom: 1.2rem; right: 1.2rem;
+    padding: 0.5rem 1rem;
+    background: rgba(0,0,0,0.6);
+    border: 1px solid #fff3;
+    border-radius: 8px;
     color: #fff;
-    border: 1px solid #fff;
-    padding: 8px 16px;
-    border-radius: 20px;
     font-size: 0.9rem;
-    z-index: 10;
   }
 
-  /* VISUAL NOVEL */
-  #vn-screen {
+  /* ===== VISUAL NOVEL ===== */
+  #vnScreen {
     background: #000;
   }
-  #vn-bg {
-    position: absolute;
-    inset: 0;
-    width: 100%; height: 100%;
-    object-fit: cover;
-    opacity: 0.85;
+  #vnBg {
+    position: absolute; inset: 0;
+    background-size: cover;
+    background-position: center;
+    transition: opacity 0.4s;
   }
-  #vn-characters {
+  #vnChars {
     position: absolute;
-    bottom: 140px;
+    bottom: 22%;
     left: 0; right: 0;
     height: 55%;
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
-    padding: 0 5%;
     pointer-events: none;
+    padding: 0 4%;
   }
-  .vn-char {
-    height: 100%;
-    max-width: 40%;
+  #vnChars img {
+    max-height: 100%;
+    max-width: 42%;
     object-fit: contain;
-    object-position: bottom;
-    transition: opacity 0.3s ease, transform 0.3s;
-    opacity: 0;
+    transition: opacity 0.3s, filter 0.3s;
   }
-  .vn-char.left { transform: scaleX(1); }
-  .vn-char.right { transform: scaleX(1); }
-  #vn-textbox {
+  #vnChars img.dim { filter: brightness(0.45); opacity: 0.7; }
+  #vnChars img.hidden { opacity: 0; }
+  #vnBox {
     position: absolute;
-    bottom: 0;
-    left: 0; right: 0;
+    bottom: 0; left: 0; right: 0;
     background: linear-gradient(transparent, rgba(0,0,0,0.92) 20%);
-    padding: 20px 5% 30px;
-    min-height: 140px;
+    padding: 1.2rem 1.5rem 1.8rem;
+    min-height: 28%;
   }
-  #vn-name {
+  #vnName {
     display: inline-block;
-    background: #e63946;
+    background: var(--accent);
     color: #fff;
-    padding: 4px 18px;
-    border-radius: 8px 8px 0 0;
+    padding: 0.25rem 1rem;
+    border-radius: 6px 6px 0 0;
     font-weight: 700;
-    font-size: 1.1rem;
-    margin-bottom: -2px;
+    font-size: 0.95rem;
+    margin-bottom: -1px;
   }
-  #vn-text {
-    background: rgba(20,10,30,0.92);
-    border: 2px solid #ff6b9d55;
-    border-radius: 0 12px 12px 12px;
-    padding: 16px 20px;
-    font-size: clamp(0.95rem, 2.5vw, 1.15rem);
-    line-height: 1.5;
-    min-height: 80px;
+  #vnText {
+    background: rgba(12,12,22,0.92);
+    border: 2px solid #e6394688;
+    border-radius: 0 10px 10px 10px;
+    padding: 0.9rem 1.1rem;
+    font-size: 1.05rem;
+    line-height: 1.45;
+    min-height: 4.5rem;
     white-space: pre-wrap;
   }
-  #vn-click {
+  #vnClickHint {
     position: absolute;
-    inset: 0;
-    z-index: 5;
-  }
-  #vn-continue {
-    position: absolute;
-    bottom: 12px; right: 8%;
-    font-size: 0.85rem;
-    opacity: 0.6;
+    bottom: 0.5rem; right: 1.2rem;
+    font-size: 0.75rem;
+    opacity: 0.5;
     animation: blink 1.2s infinite;
   }
-  @keyframes blink { 50% { opacity: 0.2; } }
+  @keyframes blink { 50% { opacity: 0.15; } }
 
-  /* BIKE GAME */
-  #bike-screen {
-    background: #111;
-  }
-  #game-canvas {
+  /* ===== GAME ===== */
+  #gameScreen { background: #111; }
+  #gameCanvas {
+    position: absolute;
+    top: 0; left: 0;
     width: 100%; height: 100%;
-    display: block;
   }
   #hud {
     position: absolute;
-    top: 10px; left: 0; right: 0;
+    top: 0; left: 0; right: 0;
+    padding: 0.6rem 1rem;
     display: flex;
     justify-content: space-between;
-    padding: 0 15px;
-    font-size: 1.1rem;
-    font-weight: 700;
-    text-shadow: 0 2px 4px #000;
-    z-index: 10;
+    align-items: flex-start;
     pointer-events: none;
+    z-index: 10;
+  }
+  .hud-box {
+    background: var(--panel);
+    border: 1px solid #ffffff22;
+    border-radius: 10px;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.9rem;
+  }
+  #healthBarOuter {
+    width: 140px; height: 14px;
+    background: #333;
+    border-radius: 7px;
+    overflow: hidden;
+    margin-top: 4px;
+  }
+  #healthBar {
+    height: 100%;
+    width: 100%;
+    background: linear-gradient(90deg, #e63946, #ff8e53);
+    transition: width 0.2s;
   }
   #controls {
     position: absolute;
-    bottom: 20px;
-    left: 0; right: 0;
+    bottom: 0; left: 0; right: 0;
+    height: 28%;
     display: flex;
     justify-content: space-between;
-    padding: 0 20px;
+    align-items: flex-end;
+    padding: 0 1.2rem 1.2rem;
+    pointer-events: none;
     z-index: 10;
   }
-  .ctrl-btn {
-    width: 70px; height: 70px;
+  .ctrl-side { display: flex; gap: 0.8rem; pointer-events: auto; }
+  .btn {
+    width: 64px; height: 64px;
     border-radius: 50%;
-    background: rgba(255,255,255,0.15);
-    border: 3px solid rgba(255,255,255,0.4);
+    background: rgba(255,255,255,0.12);
+    border: 2px solid rgba(255,255,255,0.35);
     color: #fff;
-    font-size: 1.8rem;
+    font-size: 1.6rem;
     display: flex;
     align-items: center;
     justify-content: center;
-    user-select: none;
+    backdrop-filter: blur(4px);
   }
-  .ctrl-btn:active, .ctrl-btn.active {
-    background: rgba(230,57,70,0.6);
-    border-color: #ff6b9d;
+  .btn:active, .btn.active { background: rgba(230,57,70,0.55); border-color: #e63946; }
+  #fireBtn {
+    width: 78px; height: 78px;
+    background: rgba(230,57,70,0.25);
+    border-color: #e63946;
+    font-size: 1.1rem;
+    font-weight: 700;
   }
-  #joystick-zone {
-    width: 120px; height: 120px;
+  #fireBtn:active, #fireBtn.active { background: rgba(230,57,70,0.7); }
+
+  /* Joystick area */
+  #joyZone {
+    width: 110px; height: 110px;
     position: relative;
-    background: rgba(255,255,255,0.1);
-    border-radius: 50%;
-    border: 3px solid rgba(255,255,255,0.3);
+    pointer-events: auto;
   }
-  #joystick-knob {
-    width: 50px; height: 50px;
-    background: rgba(230,57,70,0.8);
+  #joyBase {
+    width: 100%; height: 100%;
     border-radius: 50%;
+    background: rgba(255,255,255,0.08);
+    border: 2px solid rgba(255,255,255,0.25);
+    position: absolute;
+  }
+  #joyKnob {
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    background: rgba(230,57,70,0.8);
+    border: 2px solid #fff;
     position: absolute;
     top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
+    transform: translate(-50%,-50%);
     pointer-events: none;
   }
-  #bike-start-msg {
-    position: absolute;
-    inset: 0;
+
+  #gameOver, #gameWin {
+    position: absolute; inset: 0;
     background: rgba(0,0,0,0.75);
-    display: flex;
+    display: none;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     z-index: 20;
     text-align: center;
-    padding: 20px;
   }
-  #bike-start-msg h2 { font-size: 1.6rem; margin-bottom: 12px; color: #ff6b9d; }
-  #bike-start-msg p { margin-bottom: 8px; opacity: 0.9; }
-
-  /* END CODE */
-  #code-screen {
-    background: linear-gradient(135deg, #1a0033, #0d0221);
-    text-align: center;
-  }
-  #code-screen h1 {
-    font-size: clamp(1.8rem, 6vw, 3rem);
-    color: #ff6b9d;
-    margin-bottom: 1rem;
-  }
-  #final-code {
-    font-size: clamp(2.5rem, 10vw, 4.5rem);
-    letter-spacing: 0.3em;
-    font-weight: 800;
+  #gameOver h2, #gameWin h2 { font-size: 2rem; margin-bottom: 1rem; }
+  #gameOver button, #gameWin button {
+    margin-top: 1.2rem;
+    padding: 0.8rem 2rem;
+    font-size: 1.1rem;
+    background: var(--accent);
+    border: none;
+    border-radius: 10px;
     color: #fff;
-    text-shadow: 0 0 30px #ff6b9d, 0 0 60px #e63946;
-    margin: 1.5rem 0;
-    padding: 20px 40px;
-    border: 3px solid #ff6b9d;
-    border-radius: 16px;
-    background: rgba(0,0,0,0.4);
+    font-weight: 700;
   }
-  #code-screen p { opacity: 0.8; font-size: 1.1rem; }
 
-  /* Orientation warning */
-  #rotate-msg {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: #000;
-    z-index: 9999;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    padding: 30px;
+  /* Code reveal */
+  #codeReveal {
+    font-size: 2.8rem;
+    letter-spacing: 0.4rem;
+    color: #ffd700;
+    text-shadow: 0 0 20px #ffd70088;
+    margin: 1rem 0;
+    font-weight: 800;
   }
-  #rotate-msg h2 { font-size: 1.5rem; margin-bottom: 1rem; color: #ff6b9d; }
 </style>
 </head>
 <body>
-<div id="rotate-msg">
-  <h2>📱 Please turn your phone to Landscape mode</h2>
-  <p>This game is best experienced sideways</p>
+
+<!-- ORIENTATION / START -->
+<div id="orient" class="screen active">
+  <div class="phone-icon">📱</div>
+  <h1>Turn your phone to Landscape</h1>
+  <p>This experience is designed for landscape mode.</p>
+  <button id="startBtn">I'm ready — Start</button>
 </div>
 
-<div id="game-container">
-  <!-- START -->
-  <div id="start-screen" class="screen active">
-    <h1>For Shahina</h1>
-    <p>Turn your phone to <b>Landscape</b> mode<br>then tap Start</p>
-    <button class="btn" id="start-btn">Start</button>
-  </div>
+<!-- VIDEO -->
+<div id="videoScreen" class="screen">
+  <video id="mainVideo" playsinline></video>
+  <button id="videoSkip">Skip ▶</button>
+</div>
 
-  <!-- VIDEO 1 -->
-  <div id="video1-screen" class="screen">
-    <video id="video1" playsinline></video>
-    <button id="skip-video1" class="btn" style="position:absolute;bottom:20px;right:20px;display:none;">Skip</button>
+<!-- VISUAL NOVEL -->
+<div id="vnScreen" class="screen">
+  <div id="vnBg"></div>
+  <div id="vnChars">
+    <img id="vnLeft" src="" alt="" class="hidden">
+    <img id="vnRight" src="" alt="" class="hidden">
   </div>
-
-  <!-- VN 1 -->
-  <div id="vn1-screen" class="screen">
-    <img id="vn-bg" src="vnbg.png" alt="">
-    <div id="vn-characters">
-      <img id="vn-char-left" class="vn-char left" src="chuuya.png" alt="">
-      <img id="vn-char-right" class="vn-char right" src="shahina.png" alt="">
-    </div>
-    <div id="vn-textbox">
-      <div id="vn-name">Chuuya</div>
-      <div id="vn-text"></div>
-      <div id="vn-continue">Tap to continue ▶</div>
-    </div>
-    <div id="vn-click"></div>
-  </div>
-
-  <!-- VIDEO 2 -->
-  <div id="video2-screen" class="screen">
-    <video id="video2" playsinline></video>
-    <button id="skip-video2" class="btn" style="position:absolute;bottom:20px;right:20px;display:none;">Skip</button>
-  </div>
-
-  <!-- BIKE -->
-  <div id="bike-screen" class="screen">
-    <canvas id="game-canvas"></canvas>
-    <div id="hud">
-      <div>Kills: <span id="kill-count">0</span> / 50</div>
-      <div>Wave: <span id="wave-num">1</span></div>
-    </div>
-    <div id="controls">
-      <div style="display:flex;gap:15px;">
-        <div class="ctrl-btn" id="btn-left">◀</div>
-        <div class="ctrl-btn" id="btn-right">▶</div>
-      </div>
-      <div id="joystick-zone">
-        <div id="joystick-knob"></div>
-      </div>
-    </div>
-    <div id="bike-start-msg">
-      <h2>🚨 WE'RE UNDER ATTACK!!</h2>
-      <p>Left / Right buttons to steer</p>
-      <p>Drag the red joystick to aim &amp; shoot</p>
-      <p>Destroy <b>50</b> chase cars!</p>
-      <button class="btn" id="bike-go-btn" style="margin-top:20px;">HOP ON!!</button>
-    </div>
-  </div>
-
-  <!-- VN 2 -->
-  <div id="vn2-screen" class="screen">
-    <img id="vn2-bg" src="vnbg.png" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0.85;">
-    <div id="vn2-characters" style="position:absolute;bottom:140px;left:0;right:0;height:55%;display:flex;justify-content:space-between;align-items:flex-end;padding:0 5%;pointer-events:none;">
-      <img id="vn2-char-left" class="vn-char left" src="chuuya.png" alt="">
-      <img id="vn2-char-mid" class="vn-char" src="dazai.png" style="height:100%;max-width:35%;object-fit:contain;object-position:bottom;opacity:0;" alt="">
-      <img id="vn2-char-right" class="vn-char right" src="shahina.png" alt="">
-    </div>
-    <div id="vn2-textbox" style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,0.92) 20%);padding:20px 5% 30px;min-height:140px;">
-      <div id="vn2-name" style="display:inline-block;background:#e63946;color:#fff;padding:4px 18px;border-radius:8px 8px 0 0;font-weight:700;font-size:1.1rem;">Chuuya</div>
-      <div id="vn2-text" style="background:rgba(20,10,30,0.92);border:2px solid #ff6b9d55;border-radius:0 12px 12px 12px;padding:16px 20px;font-size:clamp(0.95rem,2.5vw,1.15rem);line-height:1.5;min-height:80px;white-space:pre-wrap;"></div>
-      <div id="vn2-continue" style="position:absolute;bottom:12px;right:8%;font-size:0.85rem;opacity:0.6;animation:blink 1.2s infinite;">Tap to continue ▶</div>
-    </div>
-    <div id="vn2-click" style="position:absolute;inset:0;z-index:5;"></div>
-  </div>
-
-  <!-- CODE -->
-  <div id="code-screen" class="screen">
-    <h1>You made it!</h1>
-    <p>Here's your special code:</p>
-    <div id="final-code">457143</div>
+  <div id="vnBox">
+    <div id="vnName">...</div>
+    <div id="vnText"></div>
+    <div id="vnClickHint">tap to continue</div>
   </div>
 </div>
+
+<!-- GAME -->
+<div id="gameScreen" class="screen">
+  <canvas id="gameCanvas"></canvas>
+  <div id="hud">
+    <div class="hud-box">
+      <div>HP</div>
+      <div id="healthBarOuter"><div id="healthBar"></div></div>
+    </div>
+    <div class="hud-box" style="text-align:center">
+      <div style="font-size:0.75rem;opacity:0.7">KILLS</div>
+      <div id="killCount" style="font-size:1.4rem;font-weight:700">0 / 40</div>
+    </div>
+    <div class="hud-box" style="text-align:right">
+      <div id="waveLabel">WAVE 1</div>
+    </div>
+  </div>
+
+  <div id="controls">
+    <div class="ctrl-side">
+      <div class="btn" id="leftBtn">◀</div>
+      <div class="btn" id="rightBtn">▶</div>
+    </div>
+    <div id="joyZone">
+      <div id="joyBase"></div>
+      <div id="joyKnob"></div>
+    </div>
+  </div>
+
+  <div id="gameOver">
+    <h2>Wrecked...</h2>
+    <p>The chase got the better of you.</p>
+    <button id="retryBtn">Try Again</button>
+  </div>
+  <div id="gameWin">
+    <h2>We lost them!</h2>
+    <p>Continuing...</p>
+  </div>
+</div>
+
+<audio id="bgm" loop preload="auto">
+  <source src="assets/bgm.mp3" type="audio/mpeg">
+  <source src="bgm.mp3" type="audio/mpeg">
+</audio>
 
 <script>
-// ========== ORIENTATION ==========
-function checkOrientation() {
-  const isPortrait = window.innerHeight > window.innerWidth;
-  document.getElementById('rotate-msg').style.display = isPortrait ? 'flex' : 'none';
-}
-window.addEventListener('resize', checkOrientation);
-window.addEventListener('orientationchange', checkOrientation);
-checkOrientation();
+// ============================================================
+// ASSETS & STATE
+// ============================================================
+const bgm = document.getElementById('bgm');
+bgm.volume = 0.45;
 
-// ========== SCREENS ==========
-const screens = {
-  start: document.getElementById('start-screen'),
-  video1: document.getElementById('video1-screen'),
-  vn1: document.getElementById('vn1-screen'),
-  video2: document.getElementById('video2-screen'),
-  bike: document.getElementById('bike-screen'),
-  vn2: document.getElementById('vn2-screen'),
-  code: document.getElementById('code-screen')
+function playBGM() {
+  bgm.currentTime = 0;
+  bgm.play().catch(() => {});
+}
+function stopBGM() {
+  bgm.pause();
+  bgm.currentTime = 0;
+}
+const ASSETS = {
+  bg: 'assets/vnbg.png',
+  chuuya: 'assets/chuuya.png',
+  shahina: 'assets/shahina.png',
+  dazai: 'assets/dazai.png',
+  bike: 'assets/bike.png',
+  roadA: 'assets/roadA.jpg',
+  roadB: 'assets/roadB.jpg',
+  car1: 'assets/car1.png',
+  car2: 'assets/car2.png',
+  car3: 'assets/car3.png',
+  obs1: 'assets/obstacle1.png',
+  obs2: 'assets/obstacle2.png',
 };
+
+const images = {};
+let loaded = 0;
+const totalAssets = Object.keys(ASSETS).length;
+
+function loadImages(cb) {
+  for (const [k, src] of Object.entries(ASSETS)) {
+    const img = new Image();
+    img.onload = img.onerror = () => { loaded++; if (loaded >= totalAssets) cb(); };
+    img.src = src;
+    images[k] = img;
+  }
+}
+
+// ============================================================
+// DIALOGUES
+// ============================================================
+const VN1 = [
+  { speaker: "Shahina", side: "right", text: "AM I GONNA DIE THIS WAYYYYY?!\nWITHOUT EVEN BEING REUNITED WITH MY BELOVED?!" },
+  { speaker: "Chuuya", side: "left", text: "HUH?!\nWHO'S WHINING?!" },
+  { speaker: "Shahina", side: "right", text: "*continues sobbing at a volume that could shatter glass*" },
+  { speaker: "Chuuya", side: "left", text: "...Hey, woman?\n\nDid I... do this to you?" },
+  { speaker: "Shahina", side: "right", text: "YES, YOU MONSTER!!\nYOU DID THIS TO ME!!\nWHAT DID I EVEN DO TO DESERVE THIS?!" },
+  { speaker: "Chuuya", side: "left", text: "LOOK, I can't exactly heal your wounds, but...\n\nMaybe I can reunite you with your beloved.\nI'll go Arahabaki mode and get you there as fast as possible.\n\n...Who's your beloved, by the way?" },
+  { speaker: "Shahina", side: "right", text: "GASP.\nYOU DARE QUESTION MY LOVE FOR HIM?!\nIT'S OBVIOUSLY DAZAI!!" },
+  { speaker: "Chuuya", side: "left", text: "WHAAAAAAAAAAAAAAAAA—?!\nTHAT WOMANIZER?!\nTHAT BASTARD?!\n\n...I sincerely hope you're of sound mind." },
+  { speaker: "Shahina", side: "right", text: "DON'T YOU DARE SPEAK OF HIM LIKE THAT!!\n\nBYYYY THE WAYYYYY...\n\nYOU SAID YOU WERE GONNA REUNITE ME WITH HIM, RIGHT??\nEhehehehehehe~" },
+  { speaker: "Chuuya", side: "left", text: "THAT BASTARD—?!\nFINE!! YES!! I'LL LET YOU MEET HIM!!\nBEFORE I STRANGLE THAT GUY TO DEATH WITH MY BARE HANDS!!" },
+  { speaker: "Shahina", side: "right", text: "EHEHEHEHEHEHEHEHE~" },
+  { speaker: "Chuuya", side: "left", text: "WE'RE UNDER ATTACK!!\n\nHOP ON!!" },
+  { speaker: "Shahina", side: "right", text: "HEHEHEHEHEHEHEHEHEHE—" },
+];
+
+const VN2 = [
+  { speaker: "Chuuya", side: "left", text: "I think we've lost 'em. It's safe now." },
+  { speaker: "Shahina", side: "right", text: "BRING ME TO DAZAIIIIII!!" },
+  { speaker: "Chuuya", side: "left", text: "Tch. Shut your mouth, woman. That bastard is about to be strangled to death." },
+  { speaker: "Shahina", side: "right", text: "I WON'T LET THAT HAPPEN!!\nAnd either way, my beloved will change into the Dazai I want him to be after meeting me." },
+  { speaker: "Chuuya", side: "left", text: "Heh. We'll see about that." },
+  { speaker: "Dazai", side: "left", text: "Ara~? Chuuya?\n\nWhat a pleasant surprise. I didn't know you were offering free transportation services now.", char: "dazai" },
+  { speaker: "Chuuya", side: "left", text: "YOU LITTLE—!!", char: "chuuya" },
+  { speaker: "Shahina", side: "right", text: "DAZAIIIIIIII!!" },
+  { speaker: "Dazai", side: "left", text: "Hm?\n\nOh? And who's this lovely young lady?", char: "dazai" },
+  { speaker: "Shahina", side: "right", text: "...He spoke to me." },
+  { speaker: "Chuuya", side: "left", text: "I’m so done with this.", char: "chuuya" },
+  { speaker: "Dazai", side: "left", text: "My, my. Such a passionate gaze.\nTell me, have we met before? Or have you simply fallen victim to my irresistible charm?", char: "dazai" },
+  { speaker: "Shahina", side: "right", text: "HE'S EVEN MORE BEAUTIFUL IN PERSON—" },
+  { speaker: "Chuuya", side: "left", text: "I'M GOING TO THROW UP.", char: "chuuya" },
+  { speaker: "Dazai", side: "left", text: "So, what's your name?", char: "dazai" },
+  { speaker: "Shahina", side: "right", text: "Shahina.\n\nAnd I'm going to marry you." },
+  { speaker: "Chuuya", side: "left", text: "SHE'S WHAT?!", char: "chuuya" },
+  { speaker: "Dazai", side: "left", text: "...\n\nWell, that's certainly a new one.", char: "dazai" },
+  { speaker: "Shahina", side: "right", text: "Ehehehehe~" },
+  { speaker: "Dazai", side: "left", text: "Chuuya, you seem to have acquired a rather interesting admirer.", char: "dazai" },
+  { speaker: "Chuuya", side: "left", text: "ACQUIRED?!\nSHE MADE ME DRIVE THROUGH HALF OF YOKOHAMA WHILE PEOPLE WERE TRYING TO KILL US!!", char: "chuuya" },
+  { speaker: "Dazai", side: "left", text: "Oh? And here I thought you were finally doing something useful with your life.", char: "dazai" },
+  { speaker: "Chuuya", side: "left", text: "I'M GOING TO KILL YOU.", char: "chuuya" },
+  { speaker: "Shahina", side: "right", text: "NOOOOOOO!!\nYOU CAN'T KILL MY FUTURE HUSBAND!!" },
+  { speaker: "Chuuya", side: "left", text: "THEN TELL YOUR FUTURE HUSBAND TO STOP RUNNING HIS MOUTH!!", char: "chuuya" },
+  { speaker: "Dazai", side: "left", text: "Say, Shahina...\n\nWell, before we make any commitments, I do have two very important questions.", char: "dazai" },
+  { speaker: "Shahina", side: "right", text: "Anything, my beloved. ANYTHING AT ALL." },
+  { speaker: "Dazai", side: "left", text: "First…\nWould you let me drink as much as I want?", char: "dazai" },
+  { speaker: "Shahina", side: "right", text: "…" },
+  { speaker: "Chuuya", side: "left", text: "PFFT—", char: "chuuya" },
+  { speaker: "Dazai", side: "left", text: "And second, would you be willing to pay off my debts?", char: "dazai" },
+  { speaker: "Shahina", side: "right", text: "…" },
+  { speaker: "Chuuya", side: "left", text: "HAHAHAHAHAHAHAHAHAHA!!", char: "chuuya" },
+  { speaker: "Dazai", side: "left", text: "Oh? Is something wrong, Shahina-chan?\nYou did say anything.", char: "dazai" },
+  { speaker: "Shahina", side: "right", text: "I—" },
+  { speaker: "Chuuya", side: "left", text: "GO ON, WOMAN! TELL HIM HOW YOUR BEAUTIFUL LOVE STORY JUST TURNED INTO A BANK LOAN!", char: "chuuya" },
+  { speaker: "Dazai", side: "left", text: "Chuuya, please. This is a private discussion between me and my future wife.", char: "dazai" },
+  { speaker: "Chuuya", side: "left", text: "I'M GOING TO KILL YOU, YOU BANDAGED BASTARD!!", char: "chuuya" },
+  { speaker: "Dazai", side: "left", text: "See, Shahina-chan? This is precisely why I need a financially stable wife. My life is already full of liabilities.", char: "dazai" },
+  { speaker: "Shahina", side: "right", text: "I'LL PAY OFF EVERY SINGLE DEBT, DAZAI!!" },
+  { speaker: "Chuuya", side: "left", text: "SHE'S ACTUALLY GOING TO DO IT?!", char: "chuuya" },
+  { speaker: "Dazai", side: "left", text: "Oh, how touching!", char: "dazai" },
+  { speaker: "Chuuya", side: "left", text: "YOU'RE NOT EVEN GOING TO PRETEND TO LOVE HER?!", char: "chuuya" },
+  { speaker: "Dazai", side: "left", text: "Chuuya, my dear friend…\nLove is temporary.\nFinancial security is forever.", char: "dazai" },
+  { speaker: "Shahina", side: "right", text: "DAZAI, YOU CAN DRINK ALL YOU WANT!!" },
+  { speaker: "Dazai", side: "left", text: "Ah, what a wonderful woman. I can already picture our future together.", char: "dazai" },
+  { speaker: "Chuuya", side: "left", text: "YOU'VE KNOWN HER FOR THIRTY SECONDS!!", char: "chuuya" },
+  { speaker: "Dazai", side: "left", text: "And yet, she understands me better than you ever have.", char: "dazai" },
+  { speaker: "Chuuya", side: "left", text: "I'M GOING TO THROW BOTH OF YOU OFF THIS BRIDGE.", char: "chuuya" },
+  { speaker: "Shahina", side: "right", text: "DON'T YOU DARE TOUCH MY BELOVED!!\n\n*picks up a brick*" },
+  { speaker: "Chuuya", side: "left", text: "…Where the hell did you get that?", char: "chuuya" },
+  { speaker: "Shahina", side: "right", text: "LOVE FINDS A WAY.\n\nBONK." },
+  { speaker: "Chuuya", side: "left", text: "WHY IS IT ALWAYS A BRICK?!", char: "chuuya" },
+  { speaker: "Dazai", side: "left", text: "Ahaha! Chuuya, you really do have a way of attracting violent women.", char: "dazai" },
+  { speaker: "Chuuya", side: "left", text: "SHUT UP!!", char: "chuuya" },
+  { speaker: "Dazai", side: "left", text: "Now then, Shahina-chan. About those debts…", char: "dazai" },
+  { speaker: "Chuuya", side: "left", text: "THAT'S IT. I'M DONE.\n\nI SURVIVED THE PORT MAFIA. I SURVIVED ARAHABAKI. I'VE SURVIVED YEARS OF DEALING WITH THIS WORTHLESS PIECE OF TRASH.\n\nAND NOW I'M SUPPOSED TO DRIVE YOU TWO AROUND WHILE YOU PLAN YOUR FINANCIAL DOWNFALL?!", char: "chuuya" },
+  { speaker: "Dazai", side: "left", text: "Technically, you offered to bring her to me.", char: "dazai" },
+  { speaker: "Chuuya", side: "left", text: "I HATE YOU.", char: "chuuya" },
+  { speaker: "Shahina", side: "right", text: "DAZAI, TELL HIM TO LET YOU GO!" },
+  { speaker: "Dazai", side: "left", text: "Chuuya, please let go of me. You're wrinkling my coat.", char: "dazai" },
+  { speaker: "Chuuya", side: "left", text: "I'M GOING TO WRINKLE YOUR ENTIRE EXISTENCE.", char: "chuuya" },
+  { speaker: "Dazai", side: "left", text: "Oh, and Shahina-chan?\nDo you happen to have any money on you right now?", char: "dazai" },
+  { speaker: "Chuuya", side: "left", text: "…\n\nI'M LEAVING.", char: "chuuya" },
+  { speaker: "Shahina", side: "right", text: "WAIT FOR US, CHUUYA!!" },
+  { speaker: "Dazai", side: "left", text: "Yes, do wait for us, Chuuya. After all, you're the one paying for transportation.", char: "dazai" },
+  { speaker: "Chuuya", side: "left", text: "I'M GOING TO KILL YOU BOTH!!", char: "chuuya" },
+  { speaker: "Dazai", side: "left", text: "Ah. What a lovely day.", char: "dazai" },
+  { speaker: "???", side: "none", text: "457143" },
+];
+
+// ============================================================
+// SCREEN MANAGEMENT
+// ============================================================
+const screens = {
+  orient: document.getElementById('orient'),
+  video: document.getElementById('videoScreen'),
+  vn: document.getElementById('vnScreen'),
+  game: document.getElementById('gameScreen'),
+};
+
 function showScreen(name) {
   Object.values(screens).forEach(s => s.classList.remove('active'));
   screens[name].classList.add('active');
 }
 
-// ========== START ==========
-document.getElementById('start-btn').addEventListener('click', () => {
-  playVideo1();
-});
+// ============================================================
+// VIDEO
+// ============================================================
+const videoEl = document.getElementById('mainVideo');
+let afterVideo = null;
 
-// ========== VIDEO 1 ==========
-function playVideo1() {
-  showScreen('video1');
-  const v = document.getElementById('video1');
-  v.src = 'clip1.mp4';
-  v.load();
-  const skip = document.getElementById('skip-video1');
-  skip.style.display = 'none';
-  setTimeout(() => skip.style.display = 'block', 3000);
-  v.play().catch(() => {});
-  v.onended = () => startVN1();
-  skip.onclick = () => { v.pause(); startVN1(); };
+function playVideo(src, next) {
+  showScreen('video');
+  afterVideo = next;
+  videoEl.src = src;
+  videoEl.play().catch(() => {});
+  videoEl.onended = () => { if (afterVideo) afterVideo(); };
 }
 
-// ========== VN 1 DIALOGUES ==========
-const vn1Dialogues = [
-  { speaker: "Shahina", text: "sobbing uncontrollably\nAM I GONNA DIE THIS WAYYYYY?!\nWITHOUT EVEN BEING REUNITED WITH MY BELOVED?!", left: false, right: true },
-  { speaker: "Chuuya", text: "HUH?!\nWHO'S WHINING?!", left: true, right: false },
-  { speaker: "Shahina", text: "continues sobbing at a volume that could shatter glass", left: false, right: true },
-  { speaker: "Chuuya", text: "finally realises what he's done\n...Hey, woman?\n\nawkward pause\nDid I... do this to you?", left: true, right: false },
-  { speaker: "Shahina", text: "YES, YOU MONSTER!!\nYOU DID THIS TO ME!!\nWHAT DID I EVEN DO TO DESERVE THIS?!", left: false, right: true },
-  { speaker: "Chuuya", text: "LOOK, I can't exactly heal your wounds, but...\nhe sighs, rubbing his temples.\nMaybe I can reunite you with your beloved.\nI'll go Arahabaki mode and get you there as fast as possible.\n...Who's your beloved, by the way?", left: true, right: false },
-  { speaker: "Shahina", text: "GASP.\nYOU DARE QUESTION MY LOVE FOR HIM?!\nIT'S OBVIOUSLY DAZAI!!", left: false, right: true },
-  { speaker: "Chuuya", text: "WHAAAAAAAAAAAAAAAAA—?!\nTHAT WOMANIZER?!\nTHAT BASTARD?!\nstares at her in genuine disbelief.\n...I sincerely hope you're of sound mind.", left: true, right: false },
-  { speaker: "Shahina", text: "immediately picks up a brick and launches it at Chuuya's face.\nDON'T YOU DARE SPEAK OF HIM LIKE THAT!!\n\nbeat.\nBYYYY THE WAYYYYY...\nher tears magically disappear.\nYOU SAID YOU WERE GONNA REUNITE ME WITH HIM, RIGHT??\ngrins mischievously.\nEhehehehehehe~", left: false, right: true },
-  { speaker: "Chuuya", text: "eye twitching violently.\nTHAT BASTARD—?!\nFINE!! YES!! I'LL LET YOU MEET HIM!!\nBEFORE I STRANGLE THAT GUY TO DEATH WITH MY BARE HANDS!!", left: true, right: false },
-  { speaker: "Shahina", text: "EHEHEHEHEHEHEHEHE~", left: false, right: true },
-  { speaker: "Chuuya", text: "WE'RE UNDER ATTACK!!\ngrabs Shahina by the collar and hauls her up.\nHOP ON!!", left: true, right: false },
-  { speaker: "Shahina", text: "HEHEHEHEHEHEHEHEHEHE—", left: false, right: true }
-];
+document.getElementById('videoSkip').onclick = () => {
+  videoEl.pause();
+  if (afterVideo) afterVideo();
+};
 
-let vn1Index = 0;
-function startVN1() {
-  showScreen('vn1');
-  vn1Index = 0;
-  showVN1Line();
+// ============================================================
+// VISUAL NOVEL
+// ============================================================
+let vnData = [];
+let vnIndex = 0;
+let vnCallback = null;
+const vnBg = document.getElementById('vnBg');
+const vnLeft = document.getElementById('vnLeft');
+const vnRight = document.getElementById('vnRight');
+const vnName = document.getElementById('vnName');
+const vnText = document.getElementById('vnText');
+
+function startVN(dialogues, callback) {
+  vnData = dialogues;
+  vnIndex = 0;
+  vnCallback = callback;
+  vnBg.style.backgroundImage = `url(${ASSETS.bg})`;
+  showScreen('vn');
+  showVNLine();
 }
-function showVN1Line() {
-  if (vn1Index >= vn1Dialogues.length) {
-    playVideo2();
+
+function showVNLine() {
+  if (vnIndex >= vnData.length) {
+    if (vnCallback) vnCallback();
     return;
   }
-  const d = vn1Dialogues[vn1Index];
-  document.getElementById('vn-name').textContent = d.speaker;
-  document.getElementById('vn-name').style.background = d.speaker === 'Chuuya' ? '#e63946' : '#9b59b6';
-  document.getElementById('vn-text').textContent = d.text;
-  const left = document.getElementById('vn-char-left');
-  const right = document.getElementById('vn-char-right');
-  // Full opacity for speaker, dim for the other if present
-  left.style.opacity = d.left ? (d.speaker === 'Chuuya' ? '1' : '0.45') : '0';
-  right.style.opacity = d.right ? (d.speaker === 'Shahina' ? '1' : '0.45') : '0';
+  const line = vnData[vnIndex];
+  vnName.textContent = line.speaker;
+  vnText.textContent = line.text;
+
+  // special code line
+  if (line.speaker === "???") {
+    vnName.style.background = "#ffd700";
+    vnName.style.color = "#000";
+    vnText.style.color = "#ffd700";
+    vnText.style.fontSize = "2.2rem";
+    vnText.style.textAlign = "center";
+    vnText.style.letterSpacing = "0.35rem";
+    vnText.style.fontWeight = "800";
+  } else {
+    vnName.style.background = "";
+    vnName.style.color = "";
+    vnText.style.color = "";
+    vnText.style.fontSize = "";
+    vnText.style.textAlign = "";
+    vnText.style.letterSpacing = "";
+    vnText.style.fontWeight = "";
+  }
+
+  // characters
+  const leftChar = line.side === "left" ? (line.char || (line.speaker === "Dazai" ? "dazai" : "chuuya")) : null;
+  const rightChar = line.side === "right" ? "shahina" : null;
+
+  if (line.side === "none") {
+    vnLeft.classList.add('hidden');
+    vnRight.classList.add('hidden');
+  } else {
+    if (leftChar) {
+      vnLeft.src = ASSETS[leftChar];
+      vnLeft.classList.remove('hidden', 'dim');
+    } else {
+      vnLeft.classList.add('hidden');
+    }
+    if (rightChar) {
+      vnRight.src = ASSETS.shahina;
+      vnRight.classList.remove('hidden', 'dim');
+    } else {
+      vnRight.classList.add('hidden');
+    }
+    // dim the non-speaking side if both present
+    if (leftChar && rightChar) {
+      if (line.side === "left") vnRight.classList.add('dim');
+      else vnLeft.classList.add('dim');
+    }
+  }
 }
-document.getElementById('vn-click').addEventListener('click', () => {
-  vn1Index++;
-  showVN1Line();
+
+document.getElementById('vnScreen').addEventListener('click', () => {
+  vnIndex++;
+  showVNLine();
 });
 
-// ========== VIDEO 2 ==========
-function playVideo2() {
-  showScreen('video2');
-  const v = document.getElementById('video2');
-  v.src = 'clip2.mp4';
-  v.load();
-  const skip = document.getElementById('skip-video2');
-  skip.style.display = 'none';
-  setTimeout(() => skip.style.display = 'block', 3000);
-  v.play().catch(() => {});
-  v.onended = () => startBikeIntro();
-  skip.onclick = () => { v.pause(); startBikeIntro(); };
-}
-
-// ========== BIKE GAME ==========
-function startBikeIntro() {
-  showScreen('bike');
-  document.getElementById('bike-start-msg').style.display = 'flex';
-}
-document.getElementById('bike-go-btn').addEventListener('click', () => {
-  document.getElementById('bike-start-msg').style.display = 'none';
-  startBikeGame();
-});
-
-const canvas = document.getElementById('game-canvas');
+// ============================================================
+// GAME ENGINE
+// ============================================================
+const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 let W, H;
-function resizeCanvas() {
+let animId = null;
+let gameRunning = false;
+
+const state = {
+  player: { x: 0, y: 0, w: 74, h: 94, health: 100, invuln: 0, speedMul: 1, slowTimer: 0, borderTimer: 0 },
+  bullets: [],
+  enemies: [],
+  obstacles: [],
+  particles: [],
+  scroll: 0,
+  baseSpeed: 5.04,  // +20% from 4.2
+  kills: 0,
+  spawnTimer: 0,
+  obsTimer: 0,
+  wave: 1,
+  roadLeft: 0,
+  roadRight: 0,
+  keys: { left: false, right: false },
+  shooting: false,
+  shootDir: { x: 0, y: -1 },
+  shootCooldown: 0,
+};
+
+function resize() {
   W = canvas.width = window.innerWidth;
   H = canvas.height = window.innerHeight;
+  // Match the visible asphalt more accurately to the roadA/B art borders
+  const roadWidth = W * 0.56;
+  state.roadLeft = (W - roadWidth) / 2;
+  state.roadRight = state.roadLeft + roadWidth;
+  state.player.x = W / 2;
+  state.player.y = H * 0.68;
 }
-window.addEventListener('resize', resizeCanvas);
+window.addEventListener('resize', resize);
 
-// Assets
-const images = {};
-const toLoad = ['bike.png','car1.png','car2.png','car3.png','obstacle1.png','obstacle2.png','road1.jpg','road2.jpg'];
-let loaded = 0;
-toLoad.forEach(src => {
-  const img = new Image();
-  img.src = src;
-  img.onload = () => { loaded++; };
-  images[src] = img;
-});
-
-// Game state
-let player = { x: 0, y: 0, w: 80, h: 50, speed: 0 };
-let bullets = [];
-let enemies = [];
-let obstacles = [];
-let roadOffset = 0;
-let kills = 0;
-let wave = 1;
-let gameRunning = false;
-let keys = { left: false, right: false };
-let shootDir = { x: 0, y: -1 };
-let isShooting = false;
-let lastShot = 0;
-let spawnTimer = 0;
-let roadSpeed = 4;
-
-function startBikeGame() {
-  resizeCanvas();
-  player.x = W / 2;
-  player.y = H * 0.75;
-  player.w = Math.min(100, W * 0.18);
-  player.h = player.w * 0.6;
-  bullets = [];
-  enemies = [];
-  obstacles = [];
-  kills = 0;
-  wave = 1;
-  roadOffset = 0;
-  roadSpeed = 4;
-  groupQueue = 0;
-  groupSpawnTimer = 0;
-  obstacleSpawnTimer = 0;
-  gameRunning = true;
+function resetGame() {
+  state.player.health = 100;
+  state.player.invuln = 0;
+  state.player.speedMul = 1;
+  state.player.slowTimer = 0;
+  state.player.borderTimer = 0;
+  state.player.x = W / 2;
+  state.bullets = [];
+  state.enemies = [];
+  state.obstacles = [];
+  state.particles = [];
+  state.scroll = 0;
+  state.kills = 0;
+  state.spawnTimer = 0;
+  state.obsTimer = 20;
+  state.wave = 1;
+  state.shootCooldown = 0;
+  document.getElementById('gameOver').style.display = 'none';
+  document.getElementById('gameWin').style.display = 'none';
   updateHUD();
-  requestAnimationFrame(gameLoop);
 }
 
 function updateHUD() {
-  document.getElementById('kill-count').textContent = kills;
-  document.getElementById('wave-num').textContent = wave;
+  document.getElementById('healthBar').style.width = state.player.health + '%';
+  document.getElementById('killCount').textContent = state.kills + ' / 40';
+  document.getElementById('waveLabel').textContent = 'WAVE ' + state.wave;
 }
 
-// Controls
-const btnLeft = document.getElementById('btn-left');
-const btnRight = document.getElementById('btn-right');
-btnLeft.addEventListener('touchstart', e => { e.preventDefault(); keys.left = true; btnLeft.classList.add('active'); });
-btnLeft.addEventListener('touchend', e => { e.preventDefault(); keys.left = false; btnLeft.classList.remove('active'); });
-btnRight.addEventListener('touchstart', e => { e.preventDefault(); keys.right = true; btnRight.classList.add('active'); });
-btnRight.addEventListener('touchend', e => { e.preventDefault(); keys.right = false; btnRight.classList.remove('active'); });
-// mouse fallback
-btnLeft.addEventListener('mousedown', () => { keys.left = true; btnLeft.classList.add('active'); });
-btnLeft.addEventListener('mouseup', () => { keys.left = false; btnLeft.classList.remove('active'); });
-btnLeft.addEventListener('mouseleave', () => { keys.left = false; btnLeft.classList.remove('active'); });
-btnRight.addEventListener('mousedown', () => { keys.right = true; btnRight.classList.add('active'); });
-btnRight.addEventListener('mouseup', () => { keys.right = false; btnRight.classList.remove('active'); });
-btnRight.addEventListener('mouseleave', () => { keys.right = false; btnRight.classList.remove('active'); });
-
-// Joystick
-const joyZone = document.getElementById('joystick-zone');
-const joyKnob = document.getElementById('joystick-knob');
-let joyActive = false;
-let joyCenter = { x: 0, y: 0 };
-
-function handleJoyStart(e) {
-  e.preventDefault();
-  joyActive = true;
-  const rect = joyZone.getBoundingClientRect();
-  joyCenter.x = rect.left + rect.width / 2;
-  joyCenter.y = rect.top + rect.height / 2;
-  handleJoyMove(e);
-}
-function handleJoyMove(e) {
-  if (!joyActive) return;
-  e.preventDefault();
-  const touch = e.touches ? e.touches[0] : e;
-  let dx = touch.clientX - joyCenter.x;
-  let dy = touch.clientY - joyCenter.y;
-  const max = 35;
-  const dist = Math.sqrt(dx*dx + dy*dy);
-  if (dist > max) {
-    dx = dx / dist * max;
-    dy = dy / dist * max;
-  }
-  joyKnob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
-  if (dist > 8) {
-    shootDir.x = dx / max;
-    shootDir.y = dy / max;
-    isShooting = true;
-  } else {
-    isShooting = false;
-  }
-}
-function handleJoyEnd(e) {
-  e.preventDefault();
-  joyActive = false;
-  isShooting = false;
-  joyKnob.style.transform = 'translate(-50%, -50%)';
-}
-joyZone.addEventListener('touchstart', handleJoyStart);
-joyZone.addEventListener('touchmove', handleJoyMove);
-joyZone.addEventListener('touchend', handleJoyEnd);
-joyZone.addEventListener('mousedown', handleJoyStart);
-window.addEventListener('mousemove', handleJoyMove);
-window.addEventListener('mouseup', handleJoyEnd);
-
-let groupQueue = 0; // remaining cars in current group
-
-function spawnEnemyGroup() {
-  // Spawn a group of 10 cars
-  groupQueue = 10;
-}
-
-function spawnOneEnemy() {
-  if (groupQueue <= 0) return;
-  groupQueue--;
-  const types = ['car1.png','car2.png','car3.png'];
+function spawnEnemy() {
+  // Chase cars come from BEHIND the bike (bottom of screen) and catch up
+  const types = ['car1', 'car2', 'car3'];
   const type = types[Math.floor(Math.random() * types.length)];
-  const laneW = W * 0.55;
-  const x = W * 0.225 + Math.random() * laneW;
-  const hp = 2 + Math.floor(wave / 2);
-  enemies.push({
-    x, y: -60 - (10 - groupQueue) * 35, // staggered slightly
-    w: 42 + Math.random() * 12,
-    h: 65,
-    img: type,
-    hp,
-    maxHp: hp,
-    speed: roadSpeed * 0.55 + Math.random() * 1.2 + wave * 0.15
+  const hp = 2 + Math.floor(state.wave * 0.8);
+  const margin = 28;
+  const x = state.roadLeft + margin + Math.random() * (state.roadRight - state.roadLeft - margin * 2);
+  state.enemies.push({
+    x,
+    y: H + 70,                 // spawn below the screen (behind the player)
+    w: 50, h: 72,              // +20%
+    hp, maxHp: hp,
+    type,
+    // relative speed: higher than scroll so they close the gap from behind
+    catchSpeed: 2.8 + Math.random() * 1.6 + state.wave * 0.25
   });
 }
 
 function spawnObstacle() {
-  const imgs = ['obstacle1.png','obstacle2.png'];
-  const type = imgs[Math.floor(Math.random() * 2)];
-  const laneW = W * 0.55;
-  obstacles.push({
-    x: W * 0.225 + Math.random() * laneW,
-    y: -50,
-    w: 55,
-    h: 42,
-    img: type
+  // Only on the road surface, slightly ahead of the bike
+  const type = Math.random() < 0.5 ? 'obs1' : 'obs2';
+  const margin = 48;
+  const x = state.roadLeft + margin + Math.random() * (state.roadRight - state.roadLeft - margin * 2);
+  state.obstacles.push({
+    x,
+    y: -60,                    // appear ahead (top of screen)
+    w: type === 'obs1' ? 77 : 98,   // +20%
+    h: type === 'obs1' ? 55 : 43,
+    type
   });
 }
 
-let groupSpawnTimer = 0;
-let obstacleSpawnTimer = 0;
+function hurtPlayer(amount) {
+  if (state.player.invuln > 0) return;
+  state.player.health = Math.max(0, state.player.health - amount);
+  state.player.invuln = 45;
+  state.player.speedMul = 0.35;
+  state.player.slowTimer = 60; // ~1 sec at 60fps
+  // spark particles
+  for (let i = 0; i < 12; i++) {
+    state.particles.push({
+      x: state.player.x, y: state.player.y,
+      vx: (Math.random() - 0.5) * 6,
+      vy: (Math.random() - 0.5) * 6,
+      life: 20 + Math.random() * 15,
+      color: '#ff6b6b'
+    });
+  }
+  updateHUD();
+  if (state.player.health <= 0) {
+    gameRunning = false;
+    stopBGM();
+    document.getElementById('gameOver').style.display = 'flex';
+  }
+}
 
-function gameLoop(ts) {
+function update(dt) {
   if (!gameRunning) return;
-  // Clear
-  ctx.fillStyle = '#0d1117';
-  ctx.fillRect(0, 0, W, H);
 
-  // ===== SEAMLESS ROAD =====
-  roadOffset = (roadOffset + roadSpeed);
-  const roadImg = images['road2.jpg'];
-  const roadImg2 = images['road1.jpg'];
-  if (roadImg.complete) {
-    // Use a fixed tile height based on aspect so seams match
-    const roadWidth = W * 0.7;
-    const roadX = (W - roadWidth) / 2;
-    const aspect = roadImg.height / roadImg.width;
-    const tileH = roadWidth * aspect;
-    // Seamless infinite scroll
-    let y = -(roadOffset % tileH);
-    while (y < H + tileH) {
-      ctx.drawImage(roadImg, roadX, y, roadWidth, tileH);
-      y += tileH;
+  const p = state.player;
+  const speed = state.baseSpeed * p.speedMul;
+
+  // movement
+  if (state.keys.left) p.x -= 5.5;
+  if (state.keys.right) p.x += 5.5;
+  // clamp to road borders
+  const edgePad = p.w / 2 + 6;
+  p.x = Math.max(state.roadLeft + edgePad, Math.min(state.roadRight - edgePad, p.x));
+
+  // Border contact damage: lose health if pressed against the edge for > 2 seconds
+  const nearLeft = p.x <= state.roadLeft + edgePad + 2;
+  const nearRight = p.x >= state.roadRight - edgePad - 2;
+  if (nearLeft || nearRight) {
+    p.borderTimer++;
+    if (p.borderTimer > 120) {          // ~2 seconds at 60fps
+      hurtPlayer(8);
+      p.borderTimer = 90;               // small grace before next tick
     }
-    // Side borders (dark buildings / barriers)
-    ctx.fillStyle = '#1a1a2e';
-    ctx.fillRect(0, 0, roadX, H);
-    ctx.fillRect(roadX + roadWidth, 0, W - (roadX + roadWidth), H);
-    // Yellow road edge lines
-    ctx.strokeStyle = '#f1c40f';
-    ctx.lineWidth = 4;
-    ctx.beginPath();
-    ctx.moveTo(roadX + 3, 0);
-    ctx.lineTo(roadX + 3, H);
-    ctx.moveTo(roadX + roadWidth - 3, 0);
-    ctx.lineTo(roadX + roadWidth - 3, H);
-    ctx.stroke();
   } else {
-    // fallback
-    ctx.fillStyle = '#2d3436';
-    ctx.fillRect(W*0.15, 0, W*0.7, H);
-    ctx.strokeStyle = '#f1c40f';
-    ctx.lineWidth = 4;
-    ctx.beginPath();
-    ctx.moveTo(W*0.15, 0); ctx.lineTo(W*0.15, H);
-    ctx.moveTo(W*0.85, 0); ctx.lineTo(W*0.85, H);
-    ctx.stroke();
+    p.borderTimer = 0;
   }
 
-  // Player move (stay inside road)
-  const moveSpeed = 6 + wave * 0.3;
-  if (keys.left) player.x -= moveSpeed;
-  if (keys.right) player.x += moveSpeed;
-  const roadLeft = W * 0.18;
-  const roadRight = W * 0.82;
-  player.x = Math.max(roadLeft + player.w/2, Math.min(roadRight - player.w/2, player.x));
-
-  // Draw player (bike)
-  const bikeImg = images['bike.png'];
-  if (bikeImg.complete) {
-    ctx.save();
-    ctx.translate(player.x, player.y);
-    ctx.rotate(-Math.PI / 2);
-    ctx.drawImage(bikeImg, -player.h/2, -player.w/2, player.h, player.w);
-    ctx.restore();
-  } else {
-    ctx.fillStyle = '#e63946';
-    ctx.fillRect(player.x - player.w/2, player.y - player.h/2, player.w, player.h);
+  // slow recovery
+  if (p.slowTimer > 0) {
+    p.slowTimer--;
+    if (p.slowTimer <= 0) p.speedMul = 1;
   }
+  if (p.invuln > 0) p.invuln--;
 
-  // Shoot – thin sparkling lines
-  if (isShooting && ts - lastShot > 140) {
-    lastShot = ts;
-    const len = Math.sqrt(shootDir.x**2 + shootDir.y**2) || 1;
+  // scroll – road texture rolls upward (from bottom) so it feels like driving forward
+  state.scroll -= speed;
+
+  // shooting – thin sparkling line bullets (from reference logic)
+  if (state.shootCooldown > 0) state.shootCooldown--;
+  if (state.shooting && state.shootCooldown <= 0) {
+    const len = Math.sqrt(state.shootDir.x ** 2 + state.shootDir.y ** 2) || 1;
     const speed = 16;
-    bullets.push({
-      x: player.x,
-      y: player.y - 18,
-      vx: (shootDir.x / len) * speed,
-      vy: (shootDir.y / len) * speed,
+    state.bullets.push({
+      x: p.x,
+      y: p.y - p.h * 0.28,
+      vx: (state.shootDir.x / len) * speed,
+      vy: (state.shootDir.y / len) * speed,
       life: 1.0,
       len: 18 + Math.random() * 10,
       spark: Math.random() * Math.PI * 2
     });
+    state.shootCooldown = 8;
   }
 
-  // Update & draw sparkling line bullets
-  for (let i = bullets.length - 1; i >= 0; i--) {
-    const b = bullets[i];
+  // update bullets
+  for (let i = state.bullets.length - 1; i >= 0; i--) {
+    const b = state.bullets[i];
     b.x += b.vx;
     b.y += b.vy;
     b.life -= 0.018;
     b.spark += 0.4;
     if (b.life <= 0 || b.y < -30 || b.y > H + 30 || b.x < -30 || b.x > W + 30) {
-      bullets.splice(i, 1);
+      state.bullets.splice(i, 1);
+    }
+  }
+
+  // enemies
+  const difficulty = 1 + Math.floor(state.kills / 10);
+  state.wave = difficulty;
+  const spawnRate = Math.max(25, 70 - difficulty * 8);
+
+  state.spawnTimer++;
+  if (state.spawnTimer > spawnRate && state.enemies.length < 6 + difficulty) {
+    spawnEnemy();
+    state.spawnTimer = 0;
+  }
+
+  for (let i = state.enemies.length - 1; i >= 0; i--) {
+    const e = state.enemies[i];
+    // Road now rolls upward. Objects fixed on road move up (y decreases).
+    // Chase cars start behind (bottom) and catch up by moving upward faster.
+    e.y -= speed * 0.35 + e.catchSpeed;
+
+    // slight horizontal drift toward player for pressure
+    e.x += (p.x - e.x) * 0.008;
+
+    // keep them on the road
+    e.x = Math.max(state.roadLeft + 20, Math.min(state.roadRight - 20, e.x));
+
+    // bullet collision
+    for (let j = state.bullets.length - 1; j >= 0; j--) {
+      const b = state.bullets[j];
+      if (Math.abs(b.x - e.x) < e.w * 0.45 && Math.abs(b.y - e.y) < e.h * 0.45) {
+        e.hp--;
+        state.bullets.splice(j, 1);
+        for (let k = 0; k < 6; k++) {
+          state.particles.push({
+            x: e.x, y: e.y,
+            vx: (Math.random() - 0.5) * 5,
+            vy: (Math.random() - 0.5) * 5,
+            life: 12,
+            color: '#ffcc00'
+          });
+        }
+        if (e.hp <= 0) {
+          state.kills++;
+          updateHUD();
+          for (let k = 0; k < 18; k++) {
+            state.particles.push({
+              x: e.x, y: e.y,
+              vx: (Math.random() - 0.5) * 8,
+              vy: (Math.random() - 0.5) * 8,
+              life: 20 + Math.random() * 15,
+              color: ['#ff6b6b', '#ffd93d', '#ff9f43'][Math.floor(Math.random()*3)]
+            });
+          }
+          state.enemies.splice(i, 1);
+          if (state.kills >= 40) {
+            gameRunning = false;
+            stopBGM();
+            document.getElementById('gameWin').style.display = 'flex';
+            setTimeout(() => startVN(VN2, () => {}), 1200);
+          }
+          break;
+        }
+      }
+    }
+    // player collision
+    if (Math.abs(e.x - p.x) < (e.w + p.w) * 0.35 && Math.abs(e.y - p.y) < (e.h + p.h) * 0.35) {
+      hurtPlayer(18);
+      e.y += 55; // knock them back (behind the bike)
+    }
+    // remove if they go way ahead or far behind
+    if (e.y < -120 || e.y > H + 140) state.enemies.splice(i, 1);
+  }
+
+  // obstacles (fixed on the road → move upward with the road scroll)
+  state.obsTimer++;
+  if (state.obsTimer > 85 - difficulty * 6) {
+    if (Math.random() < 0.72) spawnObstacle();
+    state.obsTimer = 0;
+  }
+  for (let i = state.obstacles.length - 1; i >= 0; i--) {
+    const o = state.obstacles[i];
+    // Approach the player from the front (top of screen)
+    o.y += speed * 1.15;
+    if (Math.abs(o.x - p.x) < (o.w + p.w) * 0.32 && Math.abs(o.y - p.y) < (o.h + p.h) * 0.32) {
+      hurtPlayer(12);
+      state.obstacles.splice(i, 1);
       continue;
     }
+    if (o.y > H + 80) state.obstacles.splice(i, 1);
+  }
+
+  // particles
+  for (let i = state.particles.length - 1; i >= 0; i--) {
+    const pt = state.particles[i];
+    pt.x += pt.vx;
+    pt.y += pt.vy;
+    pt.life--;
+    if (pt.life <= 0) state.particles.splice(i, 1);
+  }
+}
+
+function draw() {
+  // Seamless scrolling road – cycle roadA + roadB only
+  const roads = [images.roadA, images.roadB];
+  const ready = roads.every(r => r && r.complete);
+  if (ready) {
+    const src = roads[0];
+    const tileH = Math.floor(W * (src.height / src.width));
+    const period = tileH * roads.length;
+    let offset = state.scroll % period;
+    if (offset < 0) offset += period;
+
+    for (let i = -1; i <= Math.ceil(H / tileH) + 2; i++) {
+      const y = i * tileH - offset;
+      const img = roads[((i % roads.length) + roads.length) % roads.length];
+      ctx.drawImage(img, 0, y, W, tileH + 1);
+    }
+  } else {
+    ctx.fillStyle = '#1a1a22';
+    ctx.fillRect(0, 0, W, H);
+  }
+
+  // Lighter side vignette – let the image’s own building borders show clearly
+  const gradL = ctx.createLinearGradient(0, 0, state.roadLeft, 0);
+  gradL.addColorStop(0, 'rgba(0,0,0,0.35)');
+  gradL.addColorStop(0.85, 'rgba(0,0,0,0)');
+  ctx.fillStyle = gradL;
+  ctx.fillRect(0, 0, state.roadLeft, H);
+
+  const gradR = ctx.createLinearGradient(state.roadRight, 0, W, 0);
+  gradR.addColorStop(0, 'rgba(0,0,0,0)');
+  gradR.addColorStop(0.15, 'rgba(0,0,0,0)');
+  gradR.addColorStop(1, 'rgba(0,0,0,0.35)');
+  ctx.fillStyle = gradR;
+  ctx.fillRect(state.roadRight, 0, W - state.roadRight, H);
+
+  // Very subtle edge indicators that follow the image borders
+  ctx.strokeStyle = 'rgba(255, 210, 80, 0.18)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(state.roadLeft, 0); ctx.lineTo(state.roadLeft, H);
+  ctx.moveTo(state.roadRight, 0); ctx.lineTo(state.roadRight, H);
+  ctx.stroke();
+
+  // obstacles
+  for (const o of state.obstacles) {
+    const img = images[o.type];
+    if (img.complete) {
+      ctx.drawImage(img, o.x - o.w / 2, o.y - o.h / 2, o.w, o.h);
+    }
+  }
+
+  // enemies
+  for (const e of state.enemies) {
+    const img = images[e.type];
+    if (img.complete) {
+      ctx.drawImage(img, e.x - e.w / 2, e.y - e.h / 2, e.w, e.h);
+    }
+    // tiny hp bar
+    if (e.hp < e.maxHp) {
+      ctx.fillStyle = '#333';
+      ctx.fillRect(e.x - 18, e.y - e.h / 2 - 10, 36, 5);
+      ctx.fillStyle = '#e63946';
+      ctx.fillRect(e.x - 18, e.y - e.h / 2 - 10, 36 * (e.hp / e.maxHp), 5);
+    }
+  }
+
+  // bullets – thin sparkling lines (replicated logic)
+  for (const b of state.bullets) {
     const ang = Math.atan2(b.vy, b.vx);
     const half = b.len * 0.5 * b.life;
     const x1 = b.x - Math.cos(ang) * half;
@@ -766,206 +981,146 @@ function gameLoop(ts) {
     ctx.shadowBlur = 0;
   }
 
-  // ===== SPAWN LOGIC =====
-  // Groups of 10 cars
-  groupSpawnTimer++;
-  const groupInterval = Math.max(220, 380 - wave * 25); // time between groups
-  if (groupSpawnTimer > groupInterval && groupQueue <= 0) {
-    groupSpawnTimer = 0;
-    spawnEnemyGroup();
+  // particles
+  for (const pt of state.particles) {
+    ctx.globalAlpha = Math.min(1, pt.life / 15);
+    ctx.fillStyle = pt.color;
+    ctx.beginPath();
+    ctx.arc(pt.x, pt.y, 2.2, 0, Math.PI * 2);
+    ctx.fill();
   }
-  // Release cars from group one by one
-  if (groupQueue > 0 && Math.random() < 0.25) {
-    spawnOneEnemy();
-  }
+  ctx.globalAlpha = 1;
 
-  // Frequent random obstacles
-  obstacleSpawnTimer++;
-  if (obstacleSpawnTimer > Math.max(35, 70 - wave * 5)) {
-    obstacleSpawnTimer = 0;
-    if (Math.random() < 0.65) spawnObstacle();
-  }
-
-  // Enemies
-  for (let i = enemies.length - 1; i >= 0; i--) {
-    const e = enemies[i];
-    e.y += e.speed;
-    // draw
-    const img = images[e.img];
-    if (img && img.complete) {
-      ctx.drawImage(img, e.x - e.w/2, e.y - e.h/2, e.w, e.h);
-    } else {
-      ctx.fillStyle = '#6c5ce7';
-      ctx.fillRect(e.x - e.w/2, e.y - e.h/2, e.w, e.h);
-    }
-    // HP bar
-    if (e.hp < e.maxHp) {
-      ctx.fillStyle = '#333';
-      ctx.fillRect(e.x - 20, e.y - e.h/2 - 12, 40, 6);
-      ctx.fillStyle = '#e63946';
-      ctx.fillRect(e.x - 20, e.y - e.h/2 - 12, 40 * (e.hp / e.maxHp), 6);
-    }
-    // bullet collision
-    for (let j = bullets.length - 1; j >= 0; j--) {
-      const b = bullets[j];
-      if (Math.abs(b.x - e.x) < e.w/2 + 8 && Math.abs(b.y - e.y) < e.h/2 + 8) {
-        e.hp--;
-        bullets.splice(j, 1);
-        if (e.hp <= 0) {
-          enemies.splice(i, 1);
-          kills++;
-          updateHUD();
-          if (kills % 10 === 0 && kills > 0) {
-            wave = Math.floor(kills / 10) + 1;
-            roadSpeed = 4 + wave * 0.6;
-          }
-          if (kills >= 50) {
-            gameRunning = false;
-            setTimeout(startVN2, 800);
-            return;
-          }
-        }
-        break;
-      }
-    }
-    // off screen
-    if (e.y > H + 80) enemies.splice(i, 1);
-    // player collision (soft)
-    if (Math.abs(e.x - player.x) < (e.w + player.w)/2 * 0.7 &&
-        Math.abs(e.y - player.y) < (e.h + player.h)/2 * 0.7) {
-      // just push back a bit or ignore for birthday fun
-    }
-  }
-
-  // Obstacles
-  for (let i = obstacles.length - 1; i >= 0; i--) {
-    const o = obstacles[i];
-    o.y += roadSpeed;
-    const img = images[o.img];
-    if (img && img.complete) {
-      ctx.drawImage(img, o.x - o.w/2, o.y - o.h/2, o.w, o.h);
-    }
-    if (o.y > H + 50) obstacles.splice(i, 1);
-  }
-
-  requestAnimationFrame(gameLoop);
-}
-
-// ========== VN 2 ==========
-const vn2Dialogues = [
-  { speaker: "Chuuya", text: "I think we've lost 'em. It's safe now.", left: true, mid: false, right: false },
-  { speaker: "Shahina", text: "BRING ME TO DAZAIIIIII!!", left: false, mid: false, right: true },
-  { speaker: "Chuuya", text: "Tch. Shut your mouth, woman. That bastard is about to be strangled to death.", left: true, mid: false, right: false },
-  { speaker: "Shahina", text: "I WON'T LET THAT HAPPEN!!\nAnd either way, my beloved will change into the Dazai I want him to be after meeting me.", left: false, mid: false, right: true },
-  { speaker: "Chuuya", text: "Heh. We'll see about that.", left: true, mid: false, right: false },
-  { speaker: "Dazai", text: "Ara~? Chuuya?\n\nDazai appears from around the corner, hands tucked into his pockets.\nWhat a pleasant surprise. I didn't know you were offering free transportation services now.", left: true, mid: true, right: false },
-  { speaker: "Chuuya", text: "YOU LITTLE—!!", left: true, mid: true, right: false },
-  { speaker: "Shahina", text: "gasps dramatically.\nDAZAIIIIIIII!!", left: false, mid: true, right: true },
-  { speaker: "Dazai", text: "Hm?\nHe turns towards Shahina.\nOh? And who's this lovely young lady?", left: false, mid: true, right: true },
-  { speaker: "Shahina", text: "freezes.\nThe world goes silent.\nSomewhere in the distance, a single heart begins beating at an unreasonable speed.\n...He spoke to me.", left: false, mid: true, right: true },
-  { speaker: "Chuuya", text: "I’m so done with this.", left: true, mid: true, right: false },
-  { speaker: "Dazai", text: "places a hand over his chest.\nMy, my. Such a passionate gaze.\nTell me, have we met before? Or have you simply fallen victim to my irresistible charm?", left: false, mid: true, right: true },
-  { speaker: "Shahina", text: "clutches her chest.\nHE'S EVEN MORE BEAUTIFUL IN PERSON—", left: false, mid: true, right: true },
-  { speaker: "Chuuya", text: "I'M GOING TO THROW UP.", left: true, mid: true, right: false },
-  { speaker: "Dazai", text: "leans slightly towards Shahina, wearing his signature smile.\nSo, what's your name?", left: false, mid: true, right: true },
-  { speaker: "Shahina", text: "Shahina.\nShe takes a deep breath.\nAnd I'm going to marry you.", left: false, mid: true, right: true },
-  { speaker: "Chuuya", text: "SHE'S WHAT?!", left: true, mid: true, right: false },
-  { speaker: "Dazai", text: "...\nFor the first time in recorded history, Osamu Dazai appears to have run out of words.", left: false, mid: true, right: true },
-  { speaker: "Shahina", text: "smiles sweetly.\nEhehehehe~", left: false, mid: true, right: true },
-  { speaker: "Dazai", text: "Well, that's certainly a new one.\nHe glances at Chuuya.\nChuuya, you seem to have acquired a rather interesting admirer.", left: true, mid: true, right: false },
-  { speaker: "Chuuya", text: "ACQUIRED?!\nSHE MADE ME DRIVE THROUGH HALF OF YOKOHAMA WHILE PEOPLE WERE TRYING TO KILL US!!", left: true, mid: true, right: false },
-  { speaker: "Dazai", text: "Oh? And here I thought you were finally doing something useful with your life.", left: true, mid: true, right: false },
-  { speaker: "Chuuya", text: "I'M GOING TO KILL YOU.", left: true, mid: true, right: false },
-  { speaker: "Shahina", text: "NOOOOOOO!!\nShe throws herself between them.\nYOU CAN'T KILL MY FUTURE HUSBAND!!", left: false, mid: true, right: true },
-  { speaker: "Chuuya", text: "THEN TELL YOUR FUTURE HUSBAND TO STOP RUNNING HIS MOUTH!!", left: true, mid: true, right: false },
-  { speaker: "Dazai", text: "looks down at Shahina, suddenly thoughtful.\nSay, Shahina...", left: false, mid: true, right: true },
-  { speaker: "Shahina", text: "YES, MY BELOVED?!", left: false, mid: true, right: true },
-  { speaker: "Dazai", text: "Well, before we make any commitments, I do have two very important questions.", left: false, mid: true, right: true },
-  { speaker: "Shahina", text: "Anything, my beloved. ANYTHING AT ALL.", left: false, mid: true, right: true },
-  { speaker: "Dazai", text: "First…\nWould you let me drink as much as I want?", left: false, mid: true, right: true },
-  { speaker: "Shahina", text: "…", left: false, mid: true, right: true },
-  { speaker: "Chuuya", text: "PFFT—", left: true, mid: true, right: false },
-  { speaker: "Dazai", text: "And second, would you be willing to pay off my debts?", left: false, mid: true, right: true },
-  { speaker: "Shahina", text: "…", left: false, mid: true, right: true },
-  { speaker: "Chuuya", text: "HAHAHAHAHAHAHAHAHAHA!!", left: true, mid: true, right: false },
-  { speaker: "Dazai", text: "Oh? Is something wrong, Shahina-chan?\nYou did say anything.", left: false, mid: true, right: true },
-  { speaker: "Shahina", text: "I—", left: false, mid: true, right: true },
-  { speaker: "Chuuya", text: "GO ON, WOMAN! TELL HIM HOW YOUR BEAUTIFUL LOVE STORY JUST TURNED INTO A BANK LOAN!", left: true, mid: true, right: false },
-  { speaker: "Dazai", text: "Chuuya, please. This is a private discussion between me and my future wife.", left: true, mid: true, right: false },
-  { speaker: "Chuuya", text: "I'M GOING TO KILL YOU, YOU BANDAGED BASTARD!!", left: true, mid: true, right: false },
-  { speaker: "Dazai", text: "See, Shahina-chan? This is precisely why I need a financially stable wife. My life is already full of liabilities.", left: false, mid: true, right: true },
-  { speaker: "Shahina", text: "I'LL PAY OFF EVERY SINGLE DEBT, DAZAI!!", left: false, mid: true, right: true },
-  { speaker: "Chuuya", text: "SHE'S ACTUALLY GOING TO DO IT?!", left: true, mid: true, right: false },
-  { speaker: "Dazai", text: "Oh, how touching! ❤️", left: false, mid: true, right: true },
-  { speaker: "Chuuya", text: "YOU'RE NOT EVEN GOING TO PRETEND TO LOVE HER?!", left: true, mid: true, right: false },
-  { speaker: "Dazai", text: "Chuuya, my dear friend…\nLove is temporary.\nFinancial security is forever.", left: true, mid: true, right: false },
-  { speaker: "Shahina", text: "DAZAI, YOU CAN DRINK ALL YOU WANT!!", left: false, mid: true, right: true },
-  { speaker: "Dazai", text: "Ah, what a wonderful woman. I can already picture our future together.", left: false, mid: true, right: true },
-  { speaker: "Chuuya", text: "YOU'VE KNOWN HER FOR THIRTY SECONDS!!", left: true, mid: true, right: false },
-  { speaker: "Dazai", text: "And yet, she understands me better than you ever have.", left: true, mid: true, right: false },
-  { speaker: "Chuuya", text: "I'M GOING TO THROW BOTH OF YOU OFF THIS BRIDGE.", left: true, mid: true, right: false },
-  { speaker: "Shahina", text: "DON'T YOU DARE TOUCH MY BELOVED!!\nShahina picks up a brick.", left: false, mid: true, right: true },
-  { speaker: "Chuuya", text: "…Where the hell did you get that?", left: true, mid: true, right: false },
-  { speaker: "Shahina", text: "LOVE FINDS A WAY.\nBONK.", left: false, mid: true, right: true },
-  { speaker: "Chuuya", text: "WHY IS IT ALWAYS A BRICK?!", left: true, mid: true, right: false },
-  { speaker: "Dazai", text: "Ahaha! Chuuya, you really do have a way of attracting violent women.", left: true, mid: true, right: false },
-  { speaker: "Chuuya", text: "SHUT UP!!", left: true, mid: true, right: false },
-  { speaker: "Dazai", text: "Now then, Shahina-chan. About those debts…", left: false, mid: true, right: true },
-  { speaker: "Chuuya", text: "THAT'S IT. I'M DONE.\nChuuya grabs Dazai by the collar.\nI SURVIVED THE PORT MAFIA. I SURVIVED ARAHABAKI. I'VE SURVIVED YEARS OF DEALING WITH THIS WORTHLESS PIECE OF TRASH.\nAND NOW I'M SUPPOSED TO DRIVE YOU TWO AROUND WHILE YOU PLAN YOUR FINANCIAL DOWNFALL?!", left: true, mid: true, right: false },
-  { speaker: "Dazai", text: "Technically, you offered to bring her to me.", left: true, mid: true, right: false },
-  { speaker: "Chuuya", text: "I HATE YOU.", left: true, mid: true, right: false },
-  { speaker: "Shahina", text: "DAZAI, TELL HIM TO LET YOU GO!", left: false, mid: true, right: true },
-  { speaker: "Dazai", text: "Chuuya, please let go of me. You're wrinkling my coat.", left: true, mid: true, right: false },
-  { speaker: "Chuuya", text: "I'M GOING TO WRINKLE YOUR ENTIRE EXISTENCE.", left: true, mid: true, right: false },
-  { speaker: "Shahina", text: "Shahina raises the brick again.", left: false, mid: true, right: true },
-  { speaker: "Dazai", text: "Oh, and Shahina-chan?", left: false, mid: true, right: true },
-  { speaker: "Shahina", text: "YES, MY BELOVED?!", left: false, mid: true, right: true },
-  { speaker: "Dazai", text: "Do you happen to have any money on you right now?", left: false, mid: true, right: true },
-  { speaker: "Chuuya", text: "…\nI'M LEAVING.\nChuuya storms off.", left: true, mid: false, right: false },
-  { speaker: "Shahina", text: "WAIT FOR US, CHUUYA!!", left: false, mid: true, right: true },
-  { speaker: "Dazai", text: "Yes, do wait for us, Chuuya. After all, you're the one paying for transportation.", left: false, mid: true, right: true },
-  { speaker: "Chuuya", text: "from a distance: I'M GOING TO KILL YOU BOTH!!", left: true, mid: false, right: false },
-  { speaker: "Dazai", text: "Dazai smiles pleasantly as Shahina follows him.\nAh. What a lovely day.", left: false, mid: true, right: true }
-];
-
-let vn2Index = 0;
-function startVN2() {
-  showScreen('vn2');
-  vn2Index = 0;
-  showVN2Line();
-}
-function showVN2Line() {
-  if (vn2Index >= vn2Dialogues.length) {
-    showScreen('code');
-    return;
-  }
-  const d = vn2Dialogues[vn2Index];
-  const nameEl = document.getElementById('vn2-name');
-  nameEl.textContent = d.speaker;
-  if (d.speaker === 'Chuuya') nameEl.style.background = '#e63946';
-  else if (d.speaker === 'Dazai') nameEl.style.background = '#2d3436';
-  else nameEl.style.background = '#9b59b6';
-  document.getElementById('vn2-text').textContent = d.text;
-
-  const leftEl = document.getElementById('vn2-char-left');
-  const midEl = document.getElementById('vn2-char-mid');
-  const rightEl = document.getElementById('vn2-char-right');
-
-  // Dim non-speaking characters so the current speaker is clearly highlighted
-  const dim = '0.4';
-  const full = '1';
-  leftEl.style.opacity = d.left ? (d.speaker === 'Chuuya' ? full : dim) : '0';
-  rightEl.style.opacity = d.right ? (d.speaker === 'Shahina' ? full : dim) : '0';
-  if (d.mid) {
-    midEl.style.opacity = (d.speaker === 'Dazai') ? full : dim;
+  // player bike
+  const p = state.player;
+  if (p.invuln > 0 && Math.floor(p.invuln / 3) % 2 === 0) {
+    // flash
   } else {
-    midEl.style.opacity = '0';
+    const bike = images.bike;
+    if (bike.complete) {
+      const bw = p.w * 1.15;
+      const bh = p.h * 1.15;
+      ctx.drawImage(bike, p.x - bw / 2, p.y - bh / 2, bw, bh);
+    } else {
+      ctx.fillStyle = '#e63946';
+      ctx.fillRect(p.x - p.w / 2, p.y - p.h / 2, p.w, p.h);
+    }
   }
 }
-document.getElementById('vn2-click').addEventListener('click', () => {
-  vn2Index++;
-  showVN2Line();
+
+function loop() {
+  update(1);
+  draw();
+  animId = requestAnimationFrame(loop);
+}
+
+function startGame() {
+  showScreen('game');
+  resize();
+  resetGame();
+  gameRunning = true;
+  playBGM();
+  if (animId) cancelAnimationFrame(animId);
+  loop();
+}
+
+// Controls
+const leftBtn = document.getElementById('leftBtn');
+const rightBtn = document.getElementById('rightBtn');
+
+function bindHold(el, key) {
+  const start = (e) => { e.preventDefault(); state.keys[key] = true; el.classList.add('active'); };
+  const end = (e) => { e.preventDefault(); state.keys[key] = false; el.classList.remove('active'); };
+  el.addEventListener('touchstart', start, { passive: false });
+  el.addEventListener('touchend', end, { passive: false });
+  el.addEventListener('touchcancel', end, { passive: false });
+  el.addEventListener('mousedown', start);
+  el.addEventListener('mouseup', end);
+  el.addEventListener('mouseleave', end);
+}
+bindHold(leftBtn, 'left');
+bindHold(rightBtn, 'right');
+
+// Joystick for aiming / shooting
+const joyZone = document.getElementById('joyZone');
+const joyKnob = document.getElementById('joyKnob');
+let joyActive = false;
+
+function joyStart(e) {
+  e.preventDefault();
+  joyActive = true;
+  state.shooting = true;
+  joyMove(e);
+}
+function joyMove(e) {
+  if (!joyActive) return;
+  const rect = joyZone.getBoundingClientRect();
+  const touch = e.touches ? e.touches[0] : e;
+  let dx = touch.clientX - (rect.left + rect.width / 2);
+  let dy = touch.clientY - (rect.top + rect.height / 2);
+  const max = 36;
+  const dist = Math.sqrt(dx * dx + dy * dy);
+  if (dist > max) { dx = dx / dist * max; dy = dy / dist * max; }
+  joyKnob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+  if (dist > 8) {
+    state.shootDir.x = dx / max;
+    state.shootDir.y = dy / max;
+  }
+}
+function joyEnd(e) {
+  e.preventDefault();
+  joyActive = false;
+  state.shooting = false;
+  joyKnob.style.transform = 'translate(-50%, -50%)';
+  state.shootDir = { x: 0, y: -1 };
+}
+joyZone.addEventListener('touchstart', joyStart, { passive: false });
+joyZone.addEventListener('touchmove', joyMove, { passive: false });
+joyZone.addEventListener('touchend', joyEnd, { passive: false });
+joyZone.addEventListener('touchcancel', joyEnd, { passive: false });
+joyZone.addEventListener('mousedown', joyStart);
+window.addEventListener('mousemove', joyMove);
+window.addEventListener('mouseup', joyEnd);
+
+// also allow keyboard for testing
+window.addEventListener('keydown', e => {
+  if (e.key === 'ArrowLeft' || e.key === 'a') state.keys.left = true;
+  if (e.key === 'ArrowRight' || e.key === 'd') state.keys.right = true;
+  if (e.key === ' ' || e.key === 'j') state.shooting = true;
 });
+window.addEventListener('keyup', e => {
+  if (e.key === 'ArrowLeft' || e.key === 'a') state.keys.left = false;
+  if (e.key === 'ArrowRight' || e.key === 'd') state.keys.right = false;
+  if (e.key === ' ' || e.key === 'j') state.shooting = false;
+});
+
+document.getElementById('retryBtn').onclick = () => {
+  resetGame();
+  gameRunning = true;
+  playBGM();
+};
+
+// ============================================================
+// BOOT
+// ============================================================
+document.getElementById('startBtn').onclick = () => {
+  // try lock landscape
+  if (screen.orientation && screen.orientation.lock) {
+    screen.orientation.lock('landscape').catch(() => {});
+  }
+  loadImages(() => {
+    playVideo('clip1.mp4', () => {
+      startVN(VN1, () => {
+        playVideo('clip2.mp4', () => {
+          startGame();
+        });
+      });
+    });
+  });
+};
+
+// prevent scroll / bounce
+document.body.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
 </script>
 </body>
 </html>
