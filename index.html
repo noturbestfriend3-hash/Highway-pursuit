@@ -46,7 +46,7 @@
     0%, 100% { transform: rotate(0deg); }
     50% { transform: rotate(90deg); }
   }
-  #startBtn {
+  #startBtn, #fsBtn {
     margin-top: 1.5rem;
     padding: 0.9rem 2.4rem;
     font-size: 1.2rem;
@@ -57,6 +57,31 @@
     font-weight: 700;
     cursor: pointer;
   }
+  #fsBtn {
+    background: rgba(255,255,255,0.15);
+    border: 2px solid rgba(255,255,255,0.4);
+    margin-top: 0.8rem;
+    font-size: 1rem;
+    padding: 0.7rem 1.8rem;
+  }
+  #fsFloat {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    z-index: 50;
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    background: rgba(0,0,0,0.55);
+    border: 1px solid rgba(255,255,255,0.35);
+    color: #fff;
+    font-size: 1.2rem;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+  #fsFloat.show { display: flex; }
 
   /* ===== VIDEO ===== */
   #videoScreen video {
@@ -276,7 +301,9 @@
   <h1>Turn your phone to Landscape</h1>
   <p>This experience is designed for landscape mode.</p>
   <button id="startBtn">I'm ready — Start</button>
+  <button id="fsBtn">⛶ Fullscreen</button>
 </div>
+<button id="fsFloat" title="Fullscreen">⛶</button>
 
 <!-- VIDEO -->
 <div id="videoScreen" class="screen">
@@ -608,7 +635,7 @@ const state = {
   obstacles: [],
   particles: [],
   scroll: 0,
-  baseSpeed: 5.04,  // +20% from 4.2
+  baseSpeed: 2.52,  // 50% of previous (was 5.04)
   kills: 0,
   spawnTimer: 0,
   obsTimer: 0,
