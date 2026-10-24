@@ -629,7 +629,7 @@ let animId = null;
 let gameRunning = false;
 
 const state = {
-  player: { x: 0, y: 0, w: 74, h: 94, health: 100, invuln: 0, speedMul: 1, slowTimer: 0, borderTimer: 0 },
+  player: { x: 0, y: 0, w: 74, h: 94, health: 200, maxHealth: 200, invuln: 0, speedMul: 1, slowTimer: 0, borderTimer: 0 },
   bullets: [],
   enemies: [],
   obstacles: [],
@@ -661,7 +661,7 @@ function resize() {
 window.addEventListener('resize', resize);
 
 function resetGame() {
-  state.player.health = 100;
+  state.player.health = state.player.maxHealth;
   state.player.invuln = 0;
   state.player.speedMul = 1;
   state.player.slowTimer = 0;
@@ -683,7 +683,7 @@ function resetGame() {
 }
 
 function updateHUD() {
-  document.getElementById('healthBar').style.width = state.player.health + '%';
+  document.getElementById('healthBar').style.width = (100 * state.player.health / state.player.maxHealth) + '%';
   document.getElementById('killCount').textContent = state.kills + ' / 40';
   document.getElementById('waveLabel').textContent = 'WAVE ' + state.wave;
 }
@@ -1051,65 +1051,117 @@ function startGame() {
   loop();
 }
 
-// Controls
+// Controls – multi-touch safe (each finger tracked by identifier / pointerId)
 const leftBtn = document.getElementById('leftBtn');
 const rightBtn = document.getElementById('rightBtn');
+const joyZone = document.getElementById('joyZone');
+const joyKnob = document.getElementById('joyKnob');
+
+// Track which pointer/touch owns each control so they never steal each other
+const heldPointers = { left: null, right: null, joy: null };
 
 function bindHold(el, key) {
-  const start = (e) => { e.preventDefault(); state.keys[key] = true; el.classList.add('active'); };
-  const end = (e) => { e.preventDefault(); state.keys[key] = false; el.classList.remove('active'); };
-  el.addEventListener('touchstart', start, { passive: false });
-  el.addEventListener('touchend', end, { passive: false });
-  el.addEventListener('touchcancel', end, { passive: false });
-  el.addEventListener('mousedown', start);
-  el.addEventListener('mouseup', end);
-  el.addEventListener('mouseleave', end);
+  const down = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const id = e.pointerId != null ? e.pointerId : (e.changedTouches ? e.changedTouches[0].identifier : 'mouse');
+    // don't steal if this control already has a different finger
+    if (heldPointers[key] != null && heldPointers[key] !== id) return;
+    heldPointers[key] = id;
+    state.keys[key] = true;
+    el.classList.add('active');
+    if (e.pointerId != null && el.setPointerCapture) {
+      try { el.setPointerCapture(e.pointerId); } catch (_) {}
+    }
+  };
+  const up = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const id = e.pointerId != null ? e.pointerId : (e.changedTouches ? e.changedTouches[0].identifier : 'mouse');
+    // only release if this is the finger that pressed this button
+    if (heldPointers[key] !== id && heldPointers[key] != null) return;
+    heldPointers[key] = null;
+    state.keys[key] = false;
+    el.classList.remove('active');
+  };
+  el.addEventListener('pointerdown', down);
+  el.addEventListener('pointerup', up);
+  el.addEventListener('pointercancel', up);
+  // fallback touch (older mobile)
+  el.addEventListener('touchstart', down, { passive: false });
+  el.addEventListener('touchend', up, { passive: false });
+  el.addEventListener('touchcancel', up, { passive: false });
 }
 bindHold(leftBtn, 'left');
 bindHold(rightBtn, 'right');
 
-// Joystick for aiming / shooting
-const joyZone = document.getElementById('joyZone');
-const joyKnob = document.getElementById('joyKnob');
-let joyActive = false;
-
-function joyStart(e) {
-  e.preventDefault();
-  joyActive = true;
-  state.shooting = true;
-  joyMove(e);
-}
-function joyMove(e) {
-  if (!joyActive) return;
+function joySetFromPoint(clientX, clientY) {
   const rect = joyZone.getBoundingClientRect();
-  const touch = e.touches ? e.touches[0] : e;
-  let dx = touch.clientX - (rect.left + rect.width / 2);
-  let dy = touch.clientY - (rect.top + rect.height / 2);
+  let dx = clientX - (rect.left + rect.width / 2);
+  let dy = clientY - (rect.top + rect.height / 2);
   const max = 36;
-  const dist = Math.sqrt(dx * dx + dy * dy);
-  if (dist > max) { dx = dx / dist * max; dy = dy / dist * max; }
+  const dist = Math.sqrt(dx * dx + dy * dy) || 0;
+  if (dist > max) { dx = (dx / dist) * max; dy = (dy / dist) * max; }
   joyKnob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
   if (dist > 8) {
     state.shootDir.x = dx / max;
     state.shootDir.y = dy / max;
   }
 }
-function joyEnd(e) {
+
+function joyDown(e) {
   e.preventDefault();
-  joyActive = false;
+  e.stopPropagation();
+  const id = e.pointerId != null ? e.pointerId : (e.changedTouches ? e.changedTouches[0].identifier : 'mouse');
+  // already tracking a finger on the stick – ignore extra fingers
+  if (heldPointers.joy != null && heldPointers.joy !== id) return;
+  heldPointers.joy = id;
+  state.shooting = true;
+  const pt = e.changedTouches ? e.changedTouches[0] : e;
+  joySetFromPoint(pt.clientX, pt.clientY);
+  if (e.pointerId != null && joyZone.setPointerCapture) {
+    try { joyZone.setPointerCapture(e.pointerId); } catch (_) {}
+  }
+}
+
+function joyMove(e) {
+  if (heldPointers.joy == null) return;
+  e.preventDefault();
+  // find the finger that owns the joystick
+  if (e.pointerId != null) {
+    if (e.pointerId !== heldPointers.joy) return;
+    joySetFromPoint(e.clientX, e.clientY);
+  } else if (e.changedTouches) {
+    for (let i = 0; i < e.changedTouches.length; i++) {
+      const t = e.changedTouches[i];
+      if (t.identifier === heldPointers.joy) {
+        joySetFromPoint(t.clientX, t.clientY);
+        break;
+      }
+    }
+  }
+}
+
+function joyUp(e) {
+  const id = e.pointerId != null ? e.pointerId : (e.changedTouches ? e.changedTouches[0].identifier : 'mouse');
+  if (heldPointers.joy !== id && heldPointers.joy != null) return;
+  e.preventDefault();
+  heldPointers.joy = null;
   state.shooting = false;
   joyKnob.style.transform = 'translate(-50%, -50%)';
   state.shootDir = { x: 0, y: -1 };
 }
-joyZone.addEventListener('touchstart', joyStart, { passive: false });
-joyZone.addEventListener('touchmove', joyMove, { passive: false });
-joyZone.addEventListener('touchend', joyEnd, { passive: false });
-joyZone.addEventListener('touchcancel', joyEnd, { passive: false });
-joyZone.addEventListener('mousedown', joyStart);
-window.addEventListener('mousemove', joyMove);
-window.addEventListener('mouseup', joyEnd);
 
-// also allow keyboard for testing
+joyZone.addEventListener('pointerdown', joyDown);
+joyZone.addEventListener('pointermove', joyMove);
+joyZone.addEventListener('pointerup', joyUp);
+joyZone.addEventListener('pointercancel', joyUp);
+joyZone.addEventListener('touchstart', joyDown, { passive: false });
+joyZone.addEventListener('touchmove', joyMove, { passive: false });
+joyZone.addEventListener('touchend', joyUp, { passive: false });
+joyZone.addEventListener('touchcancel', joyUp, { passive: false });
+
+// keyboard for desktop testing only
 window.addEventListener('keydown', e => {
   if (e.key === 'ArrowLeft' || e.key === 'a') state.keys.left = true;
   if (e.key === 'ArrowRight' || e.key === 'd') state.keys.right = true;
