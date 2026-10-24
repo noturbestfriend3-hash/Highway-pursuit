@@ -629,13 +629,13 @@ let animId = null;
 let gameRunning = false;
 
 const state = {
-  player: { x: 0, y: 0, w: 74, h: 94, health: 300, maxHealth: 300, invuln: 0, speedMul: 1, slowTimer: 0, borderTimer: 0 },
+  player: { x: 0, y: 0, w: 74, h: 94, health: 200, maxHealth: 200, invuln: 0, speedMul: 1, slowTimer: 0, borderTimer: 0 },
   bullets: [],
   enemies: [],
   obstacles: [],
   particles: [],
   scroll: 0,
-  baseSpeed: 2.0,  // 50% of previous (was 5.04)
+  baseSpeed: 2.52,  // 50% of previous (was 5.04)
   kills: 0,
   spawnTimer: 0,
   obsTimer: 0,
@@ -744,15 +744,18 @@ function hurtPlayer(amount) {
   }
 }
 
-function update(dt) {
+function update(f) {
+  // f = frame scale (1.0 at 60fps). All motion is multiplied by f so speed is
+  // identical whether the phone is throttling rAF or running full blast.
   if (!gameRunning) return;
+  if (f <= 0) return;
 
   const p = state.player;
   const speed = state.baseSpeed * p.speedMul;
 
   // movement
-  if (state.keys.left) p.x -= 5.5;
-  if (state.keys.right) p.x += 5.5;
+  if (state.keys.left) p.x -= 5.5 * f;
+  if (state.keys.right) p.x += 5.5 * f;
   // clamp to road borders
   const edgePad = p.w / 2 + 6;
   p.x = Math.max(state.roadLeft + edgePad, Math.min(state.roadRight - edgePad, p.x));
@@ -761,7 +764,7 @@ function update(dt) {
   const nearLeft = p.x <= state.roadLeft + edgePad + 2;
   const nearRight = p.x >= state.roadRight - edgePad - 2;
   if (nearLeft || nearRight) {
-    p.borderTimer++;
+    p.borderTimer += f;
     if (p.borderTimer > 120) {          // ~2 seconds at 60fps
       hurtPlayer(8);
       p.borderTimer = 90;               // small grace before next tick
@@ -772,16 +775,16 @@ function update(dt) {
 
   // slow recovery
   if (p.slowTimer > 0) {
-    p.slowTimer--;
+    p.slowTimer -= f;
     if (p.slowTimer <= 0) p.speedMul = 1;
   }
-  if (p.invuln > 0) p.invuln--;
+  if (p.invuln > 0) p.invuln -= f;
 
   // scroll – road texture rolls upward (from bottom) so it feels like driving forward
-  state.scroll -= speed;
+  state.scroll -= speed * f;
 
   // shooting – thin sparkling line bullets (from reference logic)
-  if (state.shootCooldown > 0) state.shootCooldown--;
+  if (state.shootCooldown > 0) state.shootCooldown -= f;
   if (state.shooting && state.shootCooldown <= 0) {
     const len = Math.sqrt(state.shootDir.x ** 2 + state.shootDir.y ** 2) || 1;
     const bulletSpeed = 16;
@@ -800,10 +803,10 @@ function update(dt) {
   // update bullets
   for (let i = state.bullets.length - 1; i >= 0; i--) {
     const b = state.bullets[i];
-    b.x += b.vx;
-    b.y += b.vy;
-    b.life -= 0.018;
-    b.spark += 0.4;
+    b.x += b.vx * f;
+    b.y += b.vy * f;
+    b.life -= 0.018 * f;
+    b.spark += 0.4 * f;
     if (b.life <= 0 || b.y < -30 || b.y > H + 30 || b.x < -30 || b.x > W + 30) {
       state.bullets.splice(i, 1);
     }
@@ -814,7 +817,7 @@ function update(dt) {
   state.wave = difficulty;
   const spawnRate = Math.max(25, 70 - difficulty * 8);
 
-  state.spawnTimer++;
+  state.spawnTimer += f;
   if (state.spawnTimer > spawnRate && state.enemies.length < 6 + difficulty) {
     spawnEnemy();
     state.spawnTimer = 0;
@@ -822,12 +825,11 @@ function update(dt) {
 
   for (let i = state.enemies.length - 1; i >= 0; i--) {
     const e = state.enemies[i];
-    // Road now rolls upward. Objects fixed on road move up (y decreases).
-    // Chase cars start behind (bottom) and catch up by moving upward faster.
-    e.y -= speed * 0.35 + e.catchSpeed;
+    // Road rolls upward. Chase cars start behind and catch up.
+    e.y -= (speed * 0.35 + e.catchSpeed) * f;
 
     // slight horizontal drift toward player for pressure
-    e.x += (p.x - e.x) * 0.008;
+    e.x += (p.x - e.x) * 0.008 * f;
 
     // keep them on the road
     e.x = Math.max(state.roadLeft + 20, Math.min(state.roadRight - 20, e.x));
@@ -879,16 +881,15 @@ function update(dt) {
     if (e.y < -120 || e.y > H + 140) state.enemies.splice(i, 1);
   }
 
-  // obstacles (fixed on the road → move upward with the road scroll)
-  state.obsTimer++;
+  // obstacles
+  state.obsTimer += f;
   if (state.obsTimer > 85 - difficulty * 6) {
     if (Math.random() < 0.72) spawnObstacle();
     state.obsTimer = 0;
   }
   for (let i = state.obstacles.length - 1; i >= 0; i--) {
     const o = state.obstacles[i];
-    // Approach the player from the front (top of screen)
-    o.y += speed * 1.15;
+    o.y += speed * 1.15 * f;
     if (Math.abs(o.x - p.x) < (o.w + p.w) * 0.32 && Math.abs(o.y - p.y) < (o.h + p.h) * 0.32) {
       hurtPlayer(12);
       state.obstacles.splice(i, 1);
@@ -900,9 +901,9 @@ function update(dt) {
   // particles
   for (let i = state.particles.length - 1; i >= 0; i--) {
     const pt = state.particles[i];
-    pt.x += pt.vx;
-    pt.y += pt.vy;
-    pt.life--;
+    pt.x += pt.vx * f;
+    pt.y += pt.vy * f;
+    pt.life -= f;
     if (pt.life <= 0) state.particles.splice(i, 1);
   }
 }
@@ -1035,8 +1036,19 @@ function draw() {
   }
 }
 
-function loop() {
-  update(1);
+let lastFrameTime = 0;
+
+function loop(now) {
+  if (!lastFrameTime) lastFrameTime = now;
+  // real seconds since last frame, clamped so big pauses don't fling the world
+  let dt = (now - lastFrameTime) / 1000;
+  if (dt > 0.05) dt = 0.05;          // max ~3 frames worth
+  if (dt < 0) dt = 0;
+  lastFrameTime = now;
+
+  // scale so existing per-frame numbers still mean "at 60fps"
+  const frameScale = dt * 60;
+  update(frameScale);
   draw();
   animId = requestAnimationFrame(loop);
 }
@@ -1047,8 +1059,9 @@ function startGame() {
   resetGame();
   gameRunning = true;
   playBGM();
+  lastFrameTime = 0;
   if (animId) cancelAnimationFrame(animId);
-  loop();
+  animId = requestAnimationFrame(loop);
 }
 
 // Controls – multi-touch safe (each finger tracked by identifier / pointerId)
@@ -1176,6 +1189,7 @@ window.addEventListener('keyup', e => {
 document.getElementById('retryBtn').onclick = () => {
   resetGame();
   gameRunning = true;
+  lastFrameTime = 0;
   playBGM();
 };
 
