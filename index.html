@@ -629,13 +629,13 @@ let animId = null;
 let gameRunning = false;
 
 const state = {
-  player: { x: 0, y: 0, w: 74, h: 94, health: 200, maxHealth: 200, invuln: 0, speedMul: 1, slowTimer: 0, borderTimer: 0 },
+  player: { x: 0, y: 0, w: 74, h: 94, health: 300, maxHealth: 300, invuln: 0, speedMul: 1, slowTimer: 0, borderTimer: 0 },
   bullets: [],
   enemies: [],
   obstacles: [],
   particles: [],
   scroll: 0,
-  baseSpeed: 2.52,  // 50% of previous (was 5.04)
+  baseSpeed: 2.0,  // 50% of previous (was 5.04)
   kills: 0,
   spawnTimer: 0,
   obsTimer: 0,
